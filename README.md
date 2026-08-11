@@ -33,6 +33,8 @@ Além de perseguir o setpoint, o controlador preditivo respeita duas restriçõe
 ### Detecção de Falha por Resíduo (Fouling do UA)
 O gêmeo digital também monitora a saúde do processo: um cenário dedicado simula a incrustação progressiva (*fouling*) da superfície de troca térmica, reduzindo gradualmente o coeficiente `UA` real da planta enquanto o modelo do MPC continua assumindo o valor nominal. Um detector por resíduo (média móvel exponencial do erro entre a temperatura medida e a prevista pelo modelo) sinaliza a degradação **antes** que ela se torne um evento de segurança — mesmo quando o MPC ainda consegue manter a temperatura no setpoint, mascarando o sintoma.
 
+![Detecção de Falha por Resíduo](deteccao_falha.png)
+
 ---
 
 ## 📊 Resultados da Simulação

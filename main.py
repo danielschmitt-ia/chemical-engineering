@@ -20,6 +20,8 @@ class ReatorCSTR:
         self.T_alvo = 330.0   # Setpoint do MPC (K)
         self.T_max_seguro = 345.0  # Teto de segurança imposto ao MPC (K)
         self.taxa_max_Tj = 5.0     # Limite de variação de Tj por passo de controle (K)
+        self.T_trip_sis = 320.0    # Setpoint do interlock (SIS), com margem abaixo do ponto sem retorno (K)
+        self.Tj_seguranca = 240.0  # Ação do interlock: resfriamento máximo da jaqueta (K)
 
     def calcular_cinetica(self, CA, T):
         k = self.Pre_exp_A * np.exp(-self.Ea_R / T)
@@ -36,22 +38,46 @@ class ReatorCSTR:
     def _dinamica_ivp(self, t, y, Tj, UA, DeltaH=None):
         return self._derivadas(y[0], y[1], Tj, UA, DeltaH)
 
-    def _rk4_substep(self, CA, T, Tj, UA, dt):
-        k1_CA, k1_T = self._derivadas(CA, T, Tj, UA)
-        k2_CA, k2_T = self._derivadas(CA + dt / 2 * k1_CA, T + dt / 2 * k1_T, Tj, UA)
-        k3_CA, k3_T = self._derivadas(CA + dt / 2 * k2_CA, T + dt / 2 * k2_T, Tj, UA)
-        k4_CA, k4_T = self._derivadas(CA + dt * k3_CA, T + dt * k3_T, Tj, UA)
+    def _rk4_substep(self, CA, T, Tj, UA, dt, DeltaH=None):
+        k1_CA, k1_T = self._derivadas(CA, T, Tj, UA, DeltaH)
+        k2_CA, k2_T = self._derivadas(CA + dt / 2 * k1_CA, T + dt / 2 * k1_T, Tj, UA, DeltaH)
+        k3_CA, k3_T = self._derivadas(CA + dt / 2 * k2_CA, T + dt / 2 * k2_T, Tj, UA, DeltaH)
+        k4_CA, k4_T = self._derivadas(CA + dt * k3_CA, T + dt * k3_T, Tj, UA, DeltaH)
         CA_novo = CA + (dt / 6) * (k1_CA + 2 * k2_CA + 2 * k3_CA + k4_CA)
         T_novo = T + (dt / 6) * (k1_T + 2 * k2_T + 2 * k3_T + k4_T)
         return max(0.0, CA_novo), T_novo
 
-    def _rk4_step(self, CA, T, Tj, UA, dt, n_sub=20):
+    def _rk4_step(self, CA, T, Tj, UA, dt, n_sub=20, DeltaH=None):
         # Subdivide cada passo de controle em substeps de RK4 para manter estabilidade
         # numérica mesmo com a cinética mais rápida/exotérmica perto da ignição.
         dt_sub = dt / n_sub
         for _ in range(n_sub):
-            CA, T = self._rk4_substep(CA, T, Tj, UA, dt_sub)
+            CA, T = self._rk4_substep(CA, T, Tj, UA, dt_sub, DeltaH)
         return CA, T
+
+    def _avancar_com_sis(self, CA, T, Tj_mpc, UA, dt, DeltaH):
+        # O SIS é um logic solver de segurança dedicado, com scan rate muito mais rápido que
+        # o ciclo do MPC — aqui modelado com integração adaptativa (RK45) e detecção exata do
+        # instante de cruzamento do trip, em vez de amostrar a temperatura só a cada ciclo de
+        # controle (o que mascararia disparos dentro de um único intervalo do MPC).
+        def evento_trip(t, y, Tj, UA, DeltaH):
+            return self.T_trip_sis - y[1]
+        evento_trip.terminal = True
+        evento_trip.direction = -1
+
+        sol = solve_ivp(self._dinamica_ivp, [0, dt], [CA, T], args=(Tj_mpc, UA, DeltaH),
+                         method='RK45', max_step=dt / 20, events=evento_trip)
+        if sol.t_events[0].size == 0:
+            return sol.y[0, -1], sol.y[1, -1], False
+
+        # Trip disparado dentro deste intervalo: o restante do passo usa resfriamento máximo.
+        CA_trip, T_trip = sol.y[0, -1], sol.y[1, -1]
+        dt_restante = dt - sol.t[-1]
+        if dt_restante <= 0:
+            return CA_trip, T_trip, True
+        sol2 = solve_ivp(self._dinamica_ivp, [0, dt_restante], [CA_trip, T_trip],
+                          args=(self.Tj_seguranca, UA, DeltaH), method='RK45', max_step=dt / 20)
+        return sol2.y[0, -1], sol2.y[1, -1], True
 
     def simular_runaway(self, UA_operacao, Tj=290.0, tempo_total=20, dt=0.02, DeltaH_cenario=-250000.0):
         """Análise de risco em malha aberta (HAZOP-style). Usa um calor de reação de pior
@@ -169,6 +195,48 @@ class ReatorCSTR:
 
         return hist_tempo, hist_T, hist_Tj, hist_UA_real, hist_residuo, tempo_deteccao
 
+    def simular_interlock_seguranca(self, UA=50000.0, tempo_total=20, dt_mpc=0.25, Hp=5,
+                                     DeltaH_real=-250000.0, usar_sis=True):
+        """Camada de proteção independente (SIS — Sistema Instrumentado de Segurança),
+        seguindo o conceito de "layers of protection" da IEC 61511: o MPC otimiza sua ação
+        assumindo a cinética nominal (self.DeltaH), mas a planta real segue uma cinética mais
+        severa (DeltaH_real) — por exemplo, uma impureza ou reação secundária não prevista na
+        modelagem, causa raiz clássica de incidentes reais como Synthron (2006) e T2
+        Laboratories (2007). Como o MPC só "enxerga" o mundo através do seu próprio modelo,
+        sua restrição de segurança pode ser insuficiente diante desse descasamento. O SIS é
+        um trip hard-wired independente do modelo do MPC: baseado diretamente na temperatura
+        medida, força resfriamento máximo sempre que ela ultrapassa `T_trip_sis`."""
+        passos = int(tempo_total / dt_mpc)
+        hist_tempo = np.linspace(0, tempo_total, passos)
+        hist_T = np.zeros(passos)
+        hist_Tj_mpc = np.zeros(passos)
+        hist_sis_ativo = np.zeros(passos, dtype=bool)
+        tempo_trip = None
+
+        CA_real, T_real = 2.0, 300.0
+        chute_Tj = [290.0] * Hp
+        Tj_anterior = 290.0
+
+        for i in range(passos):
+            hist_T[i] = T_real
+
+            Tj_otimizado = self._otimizar_mpc(chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA)
+            Tj_otimo = Tj_otimizado[0]
+            chute_Tj = list(Tj_otimizado[1:]) + [Tj_otimizado[-1]]
+
+            hist_Tj_mpc[i] = Tj_otimo
+            if usar_sis:
+                CA_real, T_real, trip_ocorreu = self._avancar_com_sis(CA_real, T_real, Tj_otimo, UA, dt_mpc,
+                                                                        DeltaH_real)
+                hist_sis_ativo[i] = trip_ocorreu
+                if trip_ocorreu and tempo_trip is None:
+                    tempo_trip = hist_tempo[i]
+            else:
+                CA_real, T_real = self._rk4_step(CA_real, T_real, Tj_otimo, UA, dt_mpc, DeltaH=DeltaH_real)
+            Tj_anterior = Tj_otimo
+
+        return hist_tempo, hist_T, hist_Tj_mpc, hist_sis_ativo, tempo_trip
+
 if __name__ == "__main__":
     print("🚀 Executando simulação integrada...")
     reator = ReatorCSTR()
@@ -192,6 +260,15 @@ if __name__ == "__main__":
               f"(UA real na detecção ≈ {UA_real_falha[np.searchsorted(t3, tempo_deteccao)]:.0f})")
     else:
         print("✅ Nenhuma falha detectada no horizonte simulado.")
+
+    print("🛡️  Executando cenário de interlock (SIS) sob descasamento de modelo...")
+    t4, T_sem_sis, _, _, _ = reator.simular_interlock_seguranca(usar_sis=False)
+    _, T_com_sis, Tj_mpc_sis, sis_ativo, tempo_trip = reator.simular_interlock_seguranca(usar_sis=True)
+    if tempo_trip is not None:
+        print(f"🚨 SIS disparou em t = {tempo_trip:.2f} min "
+              f"(pico sem SIS: {T_sem_sis.max():.0f} K | pico com SIS: {T_com_sis.max():.0f} K)")
+    else:
+        print("✅ SIS não precisou intervir no horizonte simulado.")
 
     fig1, ax1 = plt.subplots(figsize=(10, 5))
     ax1.plot(t1, T_seguro, label='Seguro')
@@ -229,5 +306,16 @@ if __name__ == "__main__":
     axs3[1].set_title('Detecção de Falha por Resíduo do Gêmeo Digital')
     axs3[1].legend(); axs3[1].grid(True)
     fig3.tight_layout(); fig3.savefig('deteccao_falha.png', dpi=150)
+
+    fig4, ax4 = plt.subplots(figsize=(10, 5))
+    ax4.plot(t4, T_sem_sis, '--', color='firebrick', label='Sem SIS (só MPC, modelo desatualizado)')
+    ax4.plot(t4, T_com_sis, color='seagreen', label='Com SIS (interlock independente)')
+    ax4.axhline(y=reator.T_trip_sis, color='black', linestyle=':', label='Setpoint do trip')
+    if tempo_trip is not None:
+        ax4.axvline(x=tempo_trip, color='red', linestyle='--', label='SIS disparou')
+    ax4.set_title('Camada de Proteção Independente (SIS) sob Descasamento de Modelo')
+    ax4.set_xlabel('Tempo (min)'); ax4.set_ylabel('Temperatura (K)')
+    ax4.legend(); ax4.grid(True)
+    fig4.tight_layout(); fig4.savefig('interlock_seguranca.png', dpi=150)
 
     plt.show()

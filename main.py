@@ -14,7 +14,7 @@ class ReatorCSTR:
         self.T0 = 300.0       # Temperatura de entrada (K)
         self.Pre_exp_A = 7.2e10 # Fator Arrhenius (1/min)
         self.Ea_R = 8750.0    # Ea/R (K)
-        self.DeltaH = -50000.0 # Calor de reação (J/mol)
+        self.DeltaH = -50000.0 # Calor de reação (J/mol), cinética nominal usada pelo controle
         self.rho = 1000.0     # Densidade (g/L)
         self.Cp = 4.184       # Cp (J/g·K)
         self.T_alvo = 330.0   # Setpoint do MPC (K)
@@ -25,17 +25,18 @@ class ReatorCSTR:
         k = self.Pre_exp_A * np.exp(-self.Ea_R / T)
         return k * CA
 
-    def _derivadas(self, CA, T, Tj, UA):
+    def _derivadas(self, CA, T, Tj, UA, DeltaH=None):
+        DeltaH = self.DeltaH if DeltaH is None else DeltaH
         CA = max(CA, 0.0)
         taxa = self.calcular_cinetica(CA, T)
         dCAdt = (self.F / self.V) * (self.CA0 - CA) - taxa
-        dTdt = ((self.F / self.V) * (self.T0 - T)) + ((-self.DeltaH * taxa) / (self.rho * self.Cp)) + ((UA * (Tj - T)) / (self.V * self.rho * self.Cp))
+        dTdt = ((self.F / self.V) * (self.T0 - T)) + ((-DeltaH * taxa) / (self.rho * self.Cp)) + ((UA * (Tj - T)) / (self.V * self.rho * self.Cp))
         return dCAdt, dTdt
 
-    def _dinamica_ivp(self, t, y, Tj, UA):
-        return self._derivadas(y[0], y[1], Tj, UA)
+    def _dinamica_ivp(self, t, y, Tj, UA, DeltaH=None):
+        return self._derivadas(y[0], y[1], Tj, UA, DeltaH)
 
-    def _rk4_step(self, CA, T, Tj, UA, dt):
+    def _rk4_substep(self, CA, T, Tj, UA, dt):
         k1_CA, k1_T = self._derivadas(CA, T, Tj, UA)
         k2_CA, k2_T = self._derivadas(CA + dt / 2 * k1_CA, T + dt / 2 * k1_T, Tj, UA)
         k3_CA, k3_T = self._derivadas(CA + dt / 2 * k2_CA, T + dt / 2 * k2_T, Tj, UA)
@@ -44,18 +45,31 @@ class ReatorCSTR:
         T_novo = T + (dt / 6) * (k1_T + 2 * k2_T + 2 * k3_T + k4_T)
         return max(0.0, CA_novo), T_novo
 
-    def simular_runaway(self, UA_operacao, Tj=290.0, tempo_total=20, dt=0.02):
+    def _rk4_step(self, CA, T, Tj, UA, dt, n_sub=20):
+        # Subdivide cada passo de controle em substeps de RK4 para manter estabilidade
+        # numérica mesmo com a cinética mais rápida/exotérmica perto da ignição.
+        dt_sub = dt / n_sub
+        for _ in range(n_sub):
+            CA, T = self._rk4_substep(CA, T, Tj, UA, dt_sub)
+        return CA, T
+
+    def simular_runaway(self, UA_operacao, Tj=290.0, tempo_total=20, dt=0.02, DeltaH_cenario=-250000.0):
+        """Análise de risco em malha aberta (HAZOP-style). Usa um calor de reação de pior
+        caso (DeltaH_cenario), mais conservador que a cinética nominal usada pelo controle
+        (self.DeltaH), para representar o cenário de projeto de uma análise de segurança de
+        processo — a mesma lógica de considerar impurezas/reações secundárias no pior caso
+        credível em vez da condição de operação normal."""
         # Integração adaptativa (RK45) em vez de Euler explícito: essencial perto do
         # runaway, onde a dinâmica fica rígida (stiff) e o passo fixo perde precisão.
         hist_tempo = np.arange(0, tempo_total, dt)
 
-        def evento_runaway(t, y, Tj, UA):
+        def evento_runaway(t, y, Tj, UA, DeltaH):
             return 600.0 - y[1]
         evento_runaway.terminal = True
         evento_runaway.direction = -1
 
         sol = solve_ivp(self._dinamica_ivp, [0, tempo_total], [2.0, 300.0], t_eval=hist_tempo,
-                         args=(Tj, UA_operacao), method='RK45', max_step=dt, events=evento_runaway)
+                         args=(Tj, UA_operacao, DeltaH_cenario), method='RK45', max_step=dt, events=evento_runaway)
 
         hist_T = np.full(len(hist_tempo), sol.y[1, -1])
         hist_T[:sol.t.size] = sol.y[1]

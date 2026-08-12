@@ -40,7 +40,7 @@ O gêmeo digital também monitora a saúde do processo: um cenário dedicado sim
 ## 📊 Resultados da Simulação
 
 ### 1. Análise de Fuga Térmica (*Thermal Runaway*)
-Avaliação de risco em malha aberta demonstrando como uma queda de eficiência no coeficiente de troca térmica ($UA$) provoca a disparada de temperatura no reator:
+Avaliação de risco em malha aberta demonstrando como uma queda de eficiência no coeficiente de troca térmica ($UA$) provoca a disparada de temperatura no reator. Essa análise usa um calor de reação de **pior caso** ($\Delta H_{rx}$ conservador, ao estilo HAZOP), deliberadamente mais severo que a cinética nominal usada nas simulações de controle abaixo — a mesma lógica de uma análise de segurança de processo, que avalia o cenário crível mais adverso em vez da operação normal:
 
 ![Estabilidade e Runaway Térmico](estabilidade_runaway.png)
 

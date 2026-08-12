@@ -1,0 +1,30 @@
+# Configuração padrão usada pelas demonstrações deste repositório (main.py).
+# Reator de bancada/piloto, cinética ilustrativa — ver README para os valores e seu propósito.
+nome_planta: "Reator CSTR (demonstração)"
+tag_equipamento: "R-001"
+
+V: 100.0
+F: 10.0
+CA0: 2.0
+T0: 300.0
+Pre_exp_A: 7.2e+10
+Ea_R: 8750.0
+DeltaH: -50000.0
+rho: 1000.0
+Cp: 4.184
+
+CA_inicial: 2.0
+T_inicial: 300.0
+
+T_alvo: 330.0
+T_max_seguro: 345.0
+taxa_max_Tj: 5.0
+Tj_min: 240.0
+Tj_max: 350.0
+UA_nominal: 50000.0
+
+T_trip_sis: 320.0
+Tj_seguranca: 240.0
+
+preco_produto: 50.0
+custo_energia: 2.0e-5

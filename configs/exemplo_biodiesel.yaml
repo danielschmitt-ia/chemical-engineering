@@ -1,0 +1,44 @@
+# Exemplo ilustrativo de config para um reator de TRANSESTERIFICAÇÃO (produção de
+# biodiesel via catálise alcalina — NaOH/KOH, óleo/gordura + metanol → FAME + glicerol).
+#
+# Diferença de enquadramento em relação a exemplo_planta_industrial.yaml: essa reação é
+# muito mais branda termicamente (não tem histórico de incidentes tipo T2 Labs/Synthron) —
+# o valor deste gêmeo digital aqui está mais no Economic MPC (margens apertadas, trade-off
+# excesso de metanol vs. conversão), no soft sensor (medir conversão em FAME normalmente
+# exige GC/titulação, lento e caro) e na detecção de saponificação
+# (ReatorCSTR.rodar_mpc_com_saponificacao — ver demo_saponificacao.py) do que na análise de
+# fuga térmica. O SIS ainda se justifica, mas por inflamabilidade/pressão de vapor do
+# metanol perto do seu ponto de ebulição (~338 K a 1 atm), não por runaway cinético.
+#
+# IMPORTANTE: cinética e preços abaixo são ilustrativos (ordem de grandeza plausível para
+# transesterificação alcalina), não calibrados a partir de dados de planta real. Antes de
+# qualquer uso além de demonstração, siga o roteiro de comissionamento do
+# docs/PROJETO_INDUSTRIAL.md.
+nome_planta: "Reator de Transesterificação — Planta de Biodiesel (exemplo)"
+tag_equipamento: "R-301"
+
+V: 3000.0
+F: 66.7
+CA0: 1.0
+T0: 298.0
+Pre_exp_A: 5.5e+6
+Ea_R: 5400.0
+DeltaH: -35000.0
+rho: 880.0
+Cp: 2.1
+
+CA_inicial: 1.0
+T_inicial: 298.0
+
+T_alvo: 328.0
+T_max_seguro: 335.0
+taxa_max_Tj: 3.0
+Tj_min: 290.0
+Tj_max: 345.0
+UA_nominal: 400000.0
+
+T_trip_sis: 337.0
+Tj_seguranca: 290.0
+
+preco_produto: 0.85
+custo_energia: 1.0e-5

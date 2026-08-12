@@ -77,12 +77,19 @@ class ReatorCSTR:
                           args=(self.Tj_seguranca, UA, DeltaH), method='RK45', max_step=dt / 20)
         return sol2.y[0, -1], sol2.y[1, -1], True
 
-    def simular_runaway(self, UA_operacao, Tj=290.0, tempo_total=20, dt=0.02, DeltaH_cenario=-250000.0):
+    def simular_runaway(self, UA_operacao, Tj=290.0, tempo_total=20, dt=0.02, DeltaH_cenario=None):
         """Análise de risco em malha aberta (HAZOP-style). Usa um calor de reação de pior
         caso (DeltaH_cenario), mais conservador que a cinética nominal usada pelo controle
         (self.DeltaH), para representar o cenário de projeto de uma análise de segurança de
         processo — a mesma lógica de considerar impurezas/reações secundárias no pior caso
-        credível em vez da condição de operação normal."""
+        credível em vez da condição de operação normal.
+
+        Por padrão (`DeltaH_cenario=None`), usa 5x o calor de reação nominal da config —
+        um múltiplo, não um valor absoluto fixo, para escalar com plantas de porte/cinética
+        diferentes. É só um ponto de partida ilustrativo: o valor real de projeto de uma
+        análise de segurança vem de um HAZOP/LOPA formal (ver docs/PROJETO_INDUSTRIAL.md),
+        não deste multiplicador."""
+        DeltaH_cenario = 5.0 * self.DeltaH if DeltaH_cenario is None else DeltaH_cenario
         # Integração adaptativa (RK45) em vez de Euler explícito: essencial perto do
         # runaway, onde a dinâmica fica rígida (stiff) e o passo fixo perde precisão.
         hist_tempo = np.arange(0, tempo_total, dt)
@@ -261,7 +268,7 @@ class ReatorCSTR:
         return hist_tempo, hist_T, hist_Tj, hist_UA_real, hist_residuo, tempo_deteccao
 
     def simular_interlock_seguranca(self, UA=None, tempo_total=20, dt_mpc=0.25, Hp=5,
-                                     DeltaH_real=-250000.0, usar_sis=True):
+                                     DeltaH_real=None, usar_sis=True):
         """Camada de proteção independente (SIS — Sistema Instrumentado de Segurança),
         seguindo o conceito de "layers of protection" da IEC 61511: o MPC otimiza sua ação
         assumindo a cinética nominal (self.DeltaH), mas a planta real segue uma cinética mais
@@ -270,8 +277,13 @@ class ReatorCSTR:
         Laboratories (2007). Como o MPC só "enxerga" o mundo através do seu próprio modelo,
         sua restrição de segurança pode ser insuficiente diante desse descasamento. O SIS é
         um trip hard-wired independente do modelo do MPC: baseado diretamente na temperatura
-        medida, força resfriamento máximo sempre que ela ultrapassa `T_trip_sis`."""
+        medida, força resfriamento máximo sempre que ela ultrapassa `T_trip_sis`.
+
+        Por padrão (`DeltaH_real=None`), usa 5x o calor de reação nominal da config — mesmo
+        multiplicador ilustrativo de `simular_runaway`, para escalar com plantas diferentes
+        em vez de um valor absoluto fixo."""
         UA = self.UA_nominal if UA is None else UA
+        DeltaH_real = 5.0 * self.DeltaH if DeltaH_real is None else DeltaH_real
         passos = int(tempo_total / dt_mpc)
         hist_tempo = np.linspace(0, tempo_total, passos)
         hist_T = np.zeros(passos)

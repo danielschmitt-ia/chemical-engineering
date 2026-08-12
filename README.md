@@ -74,7 +74,7 @@ Desempenho da malha fechada mantendo o reator no setpoint estipulado ($330\text{
 
 O código foi reorganizado em um pacote configurável, `reator_digital_twin/`, para que o mesmo gêmeo digital sirva plantas reais diferentes só trocando um arquivo de configuração — sem tocar em modelagem, controle ou segurança:
 
-- **`reator_digital_twin/config.py`** — todos os parâmetros de planta (cinética, atuador, economia) vêm de uma `ConfiguracaoReator`, carregável de YAML (`configs/reator_padrao.yaml`, usado pelas demos; `configs/exemplo_planta_industrial.yaml`, um segundo exemplo em escala industrial, provando a reutilização).
+- **`reator_digital_twin/config.py`** — todos os parâmetros de planta (cinética, atuador, economia) vêm de uma `ConfiguracaoReator`, carregável de YAML: `configs/reator_padrao.yaml` (usado pelas demos), `configs/exemplo_planta_industrial.yaml` (química fina, escala industrial) e `configs/exemplo_biodiesel.yaml` (transesterificação alcalina) — três aplicações bem diferentes provando a reutilização do mesmo código.
 - **`reator_digital_twin/modelo.py`** — a física, o MPC e o SIS, incluindo `calcular_acao_controle()`: resolve um único passo do MPC a partir do estado medido, a interface que a integração em tempo real usa (em vez de rodar uma simulação de ponta a ponta).
 - **`reator_digital_twin/integracao/`** — um servidor e um cliente **OPC-UA** reais (biblioteca `asyncua`), demonstrando a arquitetura de conexão com uma planta real: o servidor representa o DCS/historiador (publica `PV_Temperatura`, `PV_ConcentracaoA` e expõe o método `AvancarPasso`); o gateway é um processo separado que lê o estado, resolve o MPC e aciona a planta — o mesmo padrão usado por soluções comerciais de APC (Aspen DMC3, Honeywell Profit Controller) para se conectar a um DCS.
 
@@ -96,6 +96,7 @@ Um CSTR não-isotérmico com risco de fuga térmica não é um exercício acadê
 - **Farmacêutica** (manufatura contínua de API): substituição gradual de processos em batelada por reatores contínuos com controle avançado, reduzindo a dependência de analisadores em linha caros através de soft sensors.
 - **Refino e petroquímica de base**: controle preditivo multivariável (APC/MPC) já é padrão de mercado em unidades de reação, com restrições de segurança embutidas no otimizador.
 - **Tratamento de efluentes e utilidades industriais**: qualquer planta com trocadores de calor em serviço contínuo enfrenta o mesmo problema de degradação gradual (*fouling*) abordado pelo módulo de detecção de falha deste projeto.
+- **Biodiesel** (transesterificação alcalina): reação bem mais branda termicamente — o encaixe aqui é outro, o Economic MPC (margens apertadas, trade-off excesso de metanol vs. conversão) e o soft sensor (medir conversão em FAME normalmente exige GC/titulação) importam mais que a análise de fuga térmica. Ver `configs/exemplo_biodiesel.yaml`.
 
 ### Incidentes reais que motivam este projeto
 

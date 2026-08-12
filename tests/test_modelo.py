@@ -102,6 +102,45 @@ class TestDeteccaoDeFalha:
         assert T.max() <= reator.T_max_seguro + 1.0
 
 
+class TestSaponificacao:
+    """rodar_mpc_com_saponificacao: modo de falha específico de biodiesel (AGL na
+    matéria-prima consumindo o catalisador alcalino) — ver configs/exemplo_biodiesel.yaml.
+    Regressão direta de um bug real: a primeira versão desempacotava (CA, T) do retorno de
+    _rk4_step na ordem errada e usava temperatura onde deveria usar concentração, inflando
+    o resíduo em ordens de grandeza (chegava a >300 num valor que devia ficar abaixo de 1)."""
+
+    def test_residuo_em_escala_de_concentracao(self, reator_biodiesel):
+        # Trava a regressão: o resíduo é uma diferença de concentração (mol/L), não pode
+        # ter magnitude de temperatura (~300).
+        _, _, _, _, _, residuo, _ = reator_biodiesel.rodar_mpc_com_saponificacao(tempo_total=150)
+        assert residuo.max() < reator_biodiesel.CA0
+
+    def test_sinaliza_desativacao_do_catalisador(self, reator_biodiesel):
+        _, _, _, CA, atividade, _, tempo_deteccao = reator_biodiesel.rodar_mpc_com_saponificacao(tempo_total=150)
+        assert tempo_deteccao is not None
+        assert atividade[-1] < atividade[0]  # catalisador de fato perdeu atividade
+
+    def test_sem_agl_nao_dispara_alarme(self, reator_biodiesel):
+        _, _, _, _, atividade, _, tempo_deteccao = reator_biodiesel.rodar_mpc_com_saponificacao(
+            fracao_agl_inicial=0.0, taxa_agl=0.0, tempo_total=60)
+        assert tempo_deteccao is None
+        assert atividade[-1] == pytest.approx(1.0)
+
+    def test_conversao_colapsa_apos_desativacao_do_catalisador(self, reator_biodiesel):
+        _, _, _, CA, _, _, _ = reator_biodiesel.rodar_mpc_com_saponificacao(tempo_total=150)
+        conversao = 1 - CA / reator_biodiesel.CA0
+        # conversão sobe (regime bom) e depois desaba conforme o catalisador se esgota.
+        assert conversao.max() > 0.85
+        assert conversao[-1] < conversao.max() - 0.3
+
+    def test_deteccao_precede_o_pior_da_falha(self, reator_biodiesel):
+        # O alarme deve soar bem antes do colapso de conversão, não depois.
+        _, _, _, CA, _, _, tempo_deteccao = reator_biodiesel.rodar_mpc_com_saponificacao(tempo_total=150)
+        conversao = 1 - CA / reator_biodiesel.CA0
+        idx_deteccao = np.searchsorted(np.linspace(0, 150, len(CA)), tempo_deteccao)
+        assert conversao[idx_deteccao] > conversao[-1]
+
+
 class TestInterlockSIS:
     def test_sem_sis_a_planta_diverge_sob_descasamento_de_modelo(self, reator):
         _, T, _, _, _ = reator.simular_interlock_seguranca(usar_sis=False, tempo_total=20)

@@ -37,6 +37,11 @@ O gêmeo digital também monitora a saúde do processo: um cenário dedicado sim
 
 ![Detecção de Falha por Resíduo](deteccao_falha.png)
 
+### Detecção de Saponificação (Biodiesel)
+Um segundo modo de falha, específico de transesterificação alcalina: ácidos graxos livres (AGL) na matéria-prima reagem com o catalisador (NaOH/KOH) por neutralização — em vez da reação principal, formam sabão e água, consumindo o catalisador e emulsificando a mistura. Diferente do fouling do UA, o sintoma primário aqui é queda de conversão, não desvio de temperatura, então o detector monitora um resíduo de concentração (comparando com uma medição periódica, como titulação de índice de acidez, contra a previsão do modelo nominal). No cenário de `demo_saponificacao.py` (`configs/exemplo_biodiesel.yaml`), a conversão sobe a ~92% e depois desaba para ~44% conforme o catalisador se esgota — a falha é sinalizada em ~80 min, com a conversão ainda em ~79%, bem antes do colapso:
+
+![Detecção de Saponificação](saponificacao.png)
+
 ### Camada de Proteção Independente (SIS)
 Restrições dentro do MPC só são tão boas quanto o modelo em que se baseiam. Para representar esse risco, simulamos um descasamento de modelo: o MPC otimiza assumindo a cinética nominal, mas a planta real segue uma cinética mais severa (uma impureza ou reação secundária não prevista — a causa raiz clássica dos incidentes reais citados abaixo). Sem proteção adicional, o reator dispara para ~424 K antes de a reação se autolimitar. Um **SIS (Sistema Instrumentado de Segurança)** — um trip *hard-wired*, independente do modelo do MPC, que força resfriamento máximo ao cruzar um limite de temperatura — contém o mesmo cenário em ~320 K, seguindo o princípio de *layers of protection* da norma IEC 61511:
 
@@ -96,7 +101,7 @@ Um CSTR não-isotérmico com risco de fuga térmica não é um exercício acadê
 - **Farmacêutica** (manufatura contínua de API): substituição gradual de processos em batelada por reatores contínuos com controle avançado, reduzindo a dependência de analisadores em linha caros através de soft sensors.
 - **Refino e petroquímica de base**: controle preditivo multivariável (APC/MPC) já é padrão de mercado em unidades de reação, com restrições de segurança embutidas no otimizador.
 - **Tratamento de efluentes e utilidades industriais**: qualquer planta com trocadores de calor em serviço contínuo enfrenta o mesmo problema de degradação gradual (*fouling*) abordado pelo módulo de detecção de falha deste projeto.
-- **Biodiesel** (transesterificação alcalina): reação bem mais branda termicamente — o encaixe aqui é outro, o Economic MPC (margens apertadas, trade-off excesso de metanol vs. conversão) e o soft sensor (medir conversão em FAME normalmente exige GC/titulação) importam mais que a análise de fuga térmica. Ver `configs/exemplo_biodiesel.yaml`.
+- **Biodiesel** (transesterificação alcalina): reação bem mais branda termicamente — o encaixe aqui é outro, o Economic MPC (margens apertadas, trade-off excesso de metanol vs. conversão), o soft sensor (medir conversão em FAME normalmente exige GC/titulação) e a detecção de saponificação (o modo de falha real mais comum nesse processo) importam mais que a análise de fuga térmica. Ver `configs/exemplo_biodiesel.yaml` e `demo_saponificacao.py`.
 
 ### Incidentes reais que motivam este projeto
 
@@ -142,6 +147,12 @@ Esses dois casos ilustram o mesmo padrão: o sistema de controle em operação n
    ```
    Salva `integracao_opcua.png`, mostrando o MPC operando o reator através de leituras e escritas de rede reais, não chamadas de função em processo.
 
+5. (Opcional) Rode a demonstração de saponificação, usando o config de biodiesel:
+   ```bash
+   python demo_saponificacao.py
+   ```
+   Salva `saponificacao.png`.
+
 ---
 
 ## 🧪 Testes
@@ -153,4 +164,4 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-A suíte cobre carregamento de config (incluindo a pegadinha de notação científica do PyYAML), o modelo físico, os dois MPCs, a detecção de falha, o SIS e o ciclo fechado via OPC-UA. Leva ~2 minutos (a maior parte é tempo real de otimização SLSQP, não overhead de teste) — ainda não está conectada a um pipeline de CI (ver `docs/PROJETO_INDUSTRIAL.md`, seção 8).
+A suíte cobre carregamento de config (incluindo a pegadinha de notação científica do PyYAML), o modelo físico, os dois MPCs, a detecção de falha (fouling e saponificação), o SIS e o ciclo fechado via OPC-UA. Leva ~3 minutos (a maior parte é tempo real de otimização SLSQP, não overhead de teste) — ainda não está conectada a um pipeline de CI (ver `docs/PROJETO_INDUSTRIAL.md`, seção 8).

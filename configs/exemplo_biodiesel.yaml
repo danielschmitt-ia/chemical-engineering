@@ -4,17 +4,16 @@
 # Diferença de enquadramento em relação a exemplo_planta_industrial.yaml: essa reação é
 # muito mais branda termicamente (não tem histórico de incidentes tipo T2 Labs/Synthron) —
 # o valor deste gêmeo digital aqui está mais no Economic MPC (margens apertadas, trade-off
-# excesso de metanol vs. conversão) e no soft sensor (medir conversão em FAME normalmente
-# exige GC/titulação, lento e caro) do que na análise de fuga térmica. O SIS ainda se
-# justifica, mas por inflamabilidade/pressão de vapor do metanol perto do seu ponto de
-# ebulição (~338 K a 1 atm), não por runaway cinético.
+# excesso de metanol vs. conversão), no soft sensor (medir conversão em FAME normalmente
+# exige GC/titulação, lento e caro) e na detecção de saponificação
+# (ReatorCSTR.rodar_mpc_com_saponificacao — ver demo_saponificacao.py) do que na análise de
+# fuga térmica. O SIS ainda se justifica, mas por inflamabilidade/pressão de vapor do
+# metanol perto do seu ponto de ebulição (~338 K a 1 atm), não por runaway cinético.
 #
 # IMPORTANTE: cinética e preços abaixo são ilustrativos (ordem de grandeza plausível para
 # transesterificação alcalina), não calibrados a partir de dados de planta real. Antes de
 # qualquer uso além de demonstração, siga o roteiro de comissionamento do
-# docs/PROJETO_INDUSTRIAL.md — em especial, o modo de falha mais comum em biodiesel
-# (formação de sabão por água/ácidos graxos livres no óleo) não é modelado por este
-# projeto hoje; o módulo de detecção de falha aqui só cobre fouling do trocador de calor.
+# docs/PROJETO_INDUSTRIAL.md.
 nome_planta: "Reator de Transesterificação — Planta de Biodiesel (exemplo)"
 tag_equipamento: "R-301"
 

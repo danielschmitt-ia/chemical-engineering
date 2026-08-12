@@ -22,18 +22,25 @@ que a segurança de processo exige.
 
 ## 2. Contexto e Problema de Negócio
 
-Aplicação-alvo ilustrativa (ver `configs/exemplo_planta_industrial.yaml`): um reator CSTR de
-**química fina/especialidades** (ex.: nitração, oxidação, hidrogenação, esterificação —
-processos usados em agroquímicos, intermediários farmacêuticos e aditivos industriais),
-operando com reação exotérmica e histórico de incidentes reais do setor (T2 Laboratories
-2007, Synthron 2006 — ver README, seção "Aplicações Industriais").
+Aplicação-alvo ilustrativa principal (ver `configs/exemplo_planta_industrial.yaml`): um
+reator CSTR de **química fina/especialidades** (ex.: nitração, oxidação, hidrogenação,
+esterificação — processos usados em agroquímicos, intermediários farmacêuticos e aditivos
+industriais), operando com reação exotérmica e histórico de incidentes reais do setor (T2
+Laboratories 2007, Synthron 2006 — ver README, seção "Aplicações Industriais").
+
+Uma segunda aplicação (`configs/exemplo_biodiesel.yaml`, transesterificação alcalina)
+mostra que a arquitetura generaliza para um perfil de risco bem diferente — reação branda,
+sem histórico de runaway, onde o valor está no Economic MPC e na detecção de um modo de
+falha específico do processo (saponificação, `rodar_mpc_com_saponificacao`) em vez da
+análise de fuga térmica.
 
 Dores de negócio que a solução ataca:
 
 | Dor | Módulo deste projeto |
 |---|---|
 | Setpoint fixo escolhido por regra de bolso, sem otimizar economicamente | Economic MPC |
-| Perda de resfriamento sem aviso prévio até virar evento de segurança | Detecção de falha por resíduo (FDI) |
+| Perda de resfriamento sem aviso prévio até virar evento de segurança | Detecção de falha por resíduo (FDI) — fouling do UA |
+| Matéria-prima fora de especificação (ex.: AGL alto) consumindo catalisador sem aviso, até a conversão desabar | Detecção de falha por resíduo (FDI) — saponificação |
 | Restrições de segurança do MPC dependem do modelo, que pode estar errado | SIS (camada independente) |
 | Analisador em linha caro/lento para medir concentração | Soft sensor com incerteza (ensemble) |
 | Integração com sistemas de controle historicamente cara e proprietária | Gateway OPC-UA (protocolo aberto e padrão de mercado) |

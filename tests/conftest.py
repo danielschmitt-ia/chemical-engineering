@@ -20,5 +20,15 @@ def config_industrial() -> ConfiguracaoReator:
 
 
 @pytest.fixture
+def config_biodiesel() -> ConfiguracaoReator:
+    return carregar_config(RAIZ / "configs" / "exemplo_biodiesel.yaml")
+
+
+@pytest.fixture
 def reator(config_padrao) -> ReatorCSTR:
     return ReatorCSTR(config_padrao)
+
+
+@pytest.fixture
+def reator_biodiesel(config_biodiesel) -> ReatorCSTR:
+    return ReatorCSTR(config_biodiesel)

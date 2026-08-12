@@ -25,32 +25,36 @@ class ReatorCSTR:
         k = self.Pre_exp_A * np.exp(-self.Ea_R / T)
         return k * CA
 
-    def _derivadas(self, CA, T, Tj, UA, DeltaH=None):
+    def _derivadas(self, CA, T, Tj, UA, DeltaH=None, atividade=1.0):
+        # `atividade` escala a taxa de reação (1.0 = catalisador fresco). Representa
+        # desativação catalítica — ex.: consumo do catalisador alcalino por saponificação
+        # (ver rodar_mpc_com_saponificacao) — sem precisar de um balanço de espécies
+        # completo (AGL, sabão, água): um multiplicador simples sobre a cinética principal.
         DeltaH = self.DeltaH if DeltaH is None else DeltaH
         CA = max(CA, 0.0)
-        taxa = self.calcular_cinetica(CA, T)
+        taxa = atividade * self.calcular_cinetica(CA, T)
         dCAdt = (self.F / self.V) * (self.CA0 - CA) - taxa
         dTdt = ((self.F / self.V) * (self.T0 - T)) + ((-DeltaH * taxa) / (self.rho * self.Cp)) + ((UA * (Tj - T)) / (self.V * self.rho * self.Cp))
         return dCAdt, dTdt
 
-    def _dinamica_ivp(self, t, y, Tj, UA, DeltaH=None):
-        return self._derivadas(y[0], y[1], Tj, UA, DeltaH)
+    def _dinamica_ivp(self, t, y, Tj, UA, DeltaH=None, atividade=1.0):
+        return self._derivadas(y[0], y[1], Tj, UA, DeltaH, atividade)
 
-    def _rk4_substep(self, CA, T, Tj, UA, dt, DeltaH=None):
-        k1_CA, k1_T = self._derivadas(CA, T, Tj, UA, DeltaH)
-        k2_CA, k2_T = self._derivadas(CA + dt / 2 * k1_CA, T + dt / 2 * k1_T, Tj, UA, DeltaH)
-        k3_CA, k3_T = self._derivadas(CA + dt / 2 * k2_CA, T + dt / 2 * k2_T, Tj, UA, DeltaH)
-        k4_CA, k4_T = self._derivadas(CA + dt * k3_CA, T + dt * k3_T, Tj, UA, DeltaH)
+    def _rk4_substep(self, CA, T, Tj, UA, dt, DeltaH=None, atividade=1.0):
+        k1_CA, k1_T = self._derivadas(CA, T, Tj, UA, DeltaH, atividade)
+        k2_CA, k2_T = self._derivadas(CA + dt / 2 * k1_CA, T + dt / 2 * k1_T, Tj, UA, DeltaH, atividade)
+        k3_CA, k3_T = self._derivadas(CA + dt / 2 * k2_CA, T + dt / 2 * k2_T, Tj, UA, DeltaH, atividade)
+        k4_CA, k4_T = self._derivadas(CA + dt * k3_CA, T + dt * k3_T, Tj, UA, DeltaH, atividade)
         CA_novo = CA + (dt / 6) * (k1_CA + 2 * k2_CA + 2 * k3_CA + k4_CA)
         T_novo = T + (dt / 6) * (k1_T + 2 * k2_T + 2 * k3_T + k4_T)
         return max(0.0, CA_novo), T_novo
 
-    def _rk4_step(self, CA, T, Tj, UA, dt, n_sub=20, DeltaH=None):
+    def _rk4_step(self, CA, T, Tj, UA, dt, n_sub=20, DeltaH=None, atividade=1.0):
         # Subdivide cada passo de controle em substeps de RK4 para manter estabilidade
         # numérica mesmo com a cinética mais rápida/exotérmica perto da ignição.
         dt_sub = dt / n_sub
         for _ in range(n_sub):
-            CA, T = self._rk4_substep(CA, T, Tj, UA, dt_sub, DeltaH)
+            CA, T = self._rk4_substep(CA, T, Tj, UA, dt_sub, DeltaH, atividade)
         return CA, T
 
     def _avancar_com_sis(self, CA, T, Tj_mpc, UA, dt, DeltaH):
@@ -266,6 +270,69 @@ class ReatorCSTR:
             Tj_anterior = Tj_otimo
 
         return hist_tempo, hist_T, hist_Tj, hist_UA_real, hist_residuo, tempo_deteccao
+
+    def rodar_mpc_com_saponificacao(self, fracao_agl_inicial=0.002, taxa_agl=0.0003,
+                                     fracao_agl_critica=0.03, atividade_minima=0.05,
+                                     tempo_total=150, dt_mpc=1.0, Hp=5,
+                                     alpha_ewma=0.3, limiar_residuo=0.05):
+        """Modo de falha específico de processos de transesterificação alcalina (produção
+        de biodiesel): ácidos graxos livres (AGL) na matéria-prima reagem com o catalisador
+        (NaOH/KOH) por neutralização — AGL + catalisador → sabão + água — em vez da reação
+        principal (triglicerídeo + metanol → éster + glicerol). Isso consome o catalisador
+        (desativando a reação principal) e o sabão formado emulsifica a mistura,
+        dificultando a separação a jusante. É o modo de falha real mais comum em biodiesel,
+        mais frequente que fuga térmica (ver configs/exemplo_biodiesel.yaml).
+
+        Modelamos a fração de AGL na matéria-prima (`fracao_agl`) subindo com o tempo — uma
+        piora progressiva de qualidade do óleo recebido — e a atividade catalítica caindo de
+        forma proporcional (a neutralização por AGL é rápida frente à transesterificação, daí
+        a relação algébrica em vez de uma EDO de desativação): `atividade = 1 -
+        fracao_agl/fracao_agl_critica`. Diferente do fouling do UA, o sintoma primário aqui é
+        queda de conversão (CA fica acima do esperado), não desvio de temperatura — por isso
+        o detector monitora o resíduo de concentração, comparando com uma medição periódica
+        (ex.: índice de acidez por titulação, como é feito de fato em plantas reais) contra a
+        previsão do modelo nominal do MPC, que assume catalisador sempre fresco."""
+        UA = self.UA_nominal
+        passos = int(tempo_total / dt_mpc)
+        hist_tempo = np.linspace(0, tempo_total, passos)
+        hist_T = np.zeros(passos)
+        hist_Tj = np.zeros(passos)
+        hist_CA = np.zeros(passos)
+        hist_atividade = np.zeros(passos)
+        hist_residuo = np.zeros(passos)
+        tempo_deteccao = None
+
+        CA_real, T_real = self.CA_inicial, self.T_inicial
+        chute_Tj = [self.T0 - 10.0] * Hp
+        Tj_anterior = chute_Tj[0]
+        residuo_ewma = 0.0
+        CA_previsto_modelo = CA_real
+
+        for i in range(passos):
+            fracao_agl_atual = fracao_agl_inicial + taxa_agl * hist_tempo[i]
+            atividade_real = max(atividade_minima, 1.0 - fracao_agl_atual / fracao_agl_critica)
+            hist_atividade[i] = atividade_real
+
+            residuo = abs(CA_real - CA_previsto_modelo)
+            residuo_ewma = alpha_ewma * residuo + (1 - alpha_ewma) * residuo_ewma
+            hist_residuo[i] = residuo_ewma
+            if tempo_deteccao is None and residuo_ewma > limiar_residuo:
+                tempo_deteccao = hist_tempo[i]
+
+            hist_T[i], hist_Tj[i], hist_CA[i] = T_real, chute_Tj[0], CA_real
+
+            Tj_otimizado = self._otimizar(self._custo_mpc, chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA)
+            Tj_otimo = Tj_otimizado[0]
+            chute_Tj = list(Tj_otimizado[1:]) + [Tj_otimizado[-1]]
+
+            # O "gêmeo digital" prevê o próximo passo assumindo catalisador sempre fresco
+            # (atividade=1) — não sabe da saponificação em curso.
+            CA_previsto_modelo, _ = self._rk4_step(CA_real, T_real, Tj_otimo, UA, dt_mpc, atividade=1.0)
+            # A planta real evolui com a atividade catalítica degradada pela saponificação.
+            CA_real, T_real = self._rk4_step(CA_real, T_real, Tj_otimo, UA, dt_mpc, atividade=atividade_real)
+            Tj_anterior = Tj_otimo
+
+        return hist_tempo, hist_T, hist_Tj, hist_CA, hist_atividade, hist_residuo, tempo_deteccao
 
     def simular_interlock_seguranca(self, UA=None, tempo_total=20, dt_mpc=0.25, Hp=5,
                                      DeltaH_real=None, usar_sis=True):

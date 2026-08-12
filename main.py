@@ -249,9 +249,20 @@ if __name__ == "__main__":
     X_scaled = scaler.fit_transform(X_dados)
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, hist_CA_mpc, test_size=0.2, random_state=42)
 
-    ia_sensor = MLPRegressor(hidden_layer_sizes=(15, 10), max_iter=2000, random_state=42)
-    ia_sensor.fit(X_train, y_train)
-    concentracao_predita = ia_sensor.predict(X_scaled)
+    # Ensemble via bootstrap: em vez de uma única rede, treina várias em reamostragens dos
+    # dados e usa a dispersão entre elas como estimativa de incerteza (soft sensor
+    # "uncertainty-aware"), para sinalizar quando a estimativa de C_A é pouco confiável.
+    n_ensemble = 15
+    rng = np.random.default_rng(42)
+    preds_ensemble = np.zeros((n_ensemble, len(X_scaled)))
+    for m in range(n_ensemble):
+        idx_boot = rng.integers(0, len(X_train), size=len(X_train))
+        modelo = MLPRegressor(hidden_layer_sizes=(15, 10), max_iter=2000, random_state=m)
+        modelo.fit(X_train[idx_boot], y_train[idx_boot])
+        preds_ensemble[m] = modelo.predict(X_scaled)
+    concentracao_predita = preds_ensemble.mean(axis=0)
+    concentracao_incerteza = preds_ensemble.std(axis=0)
+    print(f"📈 Soft sensor: incerteza média (±1 desvio-padrão do ensemble) = {concentracao_incerteza.mean():.3f} mol/L")
 
     print("🔎 Executando cenário de fouling com detecção de falha...")
     t3, T_falha, Tj_falha, UA_real_falha, residuo_falha, tempo_deteccao = reator.rodar_mpc_com_deteccao_falha()
@@ -286,8 +297,11 @@ if __name__ == "__main__":
     axs2[0].legend(); axs2[0].grid(True)
 
     axs2[1].plot(t2, hist_CA_mpc, label='Real')
-    axs2[1].plot(t2, concentracao_predita, '--', label='IA (soft sensor)')
-    axs2[1].set_title('Soft Sensor (Rede Neural)')
+    axs2[1].plot(t2, concentracao_predita, '--', label='IA (soft sensor, média do ensemble)')
+    axs2[1].fill_between(t2, concentracao_predita - 2 * concentracao_incerteza,
+                          concentracao_predita + 2 * concentracao_incerteza,
+                          color='orange', alpha=0.2, label='Incerteza (±2 desvios-padrão)')
+    axs2[1].set_title('Soft Sensor com Quantificação de Incerteza (Ensemble)')
     axs2[1].legend(); axs2[1].grid(True)
     fig2.tight_layout(); fig2.savefig('mpc_softsensor.png', dpi=150)
 

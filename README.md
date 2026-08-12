@@ -49,8 +49,8 @@ Avaliação de risco em malha aberta demonstrando como uma queda de eficiência 
 
 ![Estabilidade e Runaway Térmico](estabilidade_runaway.png)
 
-### 2. Controle Preditivo (MPC) e Soft Sensor (Rede Neural)
-Desempenho da malha fechada mantendo o reator no setpoint estipulado ($330\text{ K}$) enquanto a Rede Neural (MLP) estima a concentração de saída $C_A$ em tempo real com alta precisão:
+### 2. Controle Preditivo (MPC) e Soft Sensor com Incerteza (Ensemble)
+Desempenho da malha fechada mantendo o reator no setpoint estipulado ($330\text{ K}$) enquanto um ensemble de 15 Redes Neurais (MLP, treinadas por bootstrap) estima a concentração de saída $C_A$ em tempo real. A dispersão entre as redes do ensemble fornece uma banda de incerteza (±2 desvios-padrão) — sinalizando quando a estimativa é menos confiável, em vez de só um valor pontual:
 
 ![Desempenho do MPC e Soft Sensor](mpc_softsensor.png)
 

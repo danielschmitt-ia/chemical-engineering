@@ -134,9 +134,9 @@ não são uma estimativa de ROI calibrada para uma planta específica:
 
 1. Escolher a planta-alvo real e coletar dados históricos (temperatura, vazões, amostras de
    laboratório) para a Fase 1.
-2. Adicionar testes automatizados (`pytest`) cobrindo os módulos de `reator_digital_twin/`,
-   hoje validados só por execução manual — pré-requisito antes de qualquer uso além de
-   demonstração.
+2. ~~Adicionar testes automatizados (`pytest`) cobrindo os módulos de `reator_digital_twin/`~~
+   — feito (`tests/`, ver README, seção "Testes"). Falta ainda: rodar a suíte em CI a cada
+   push/PR (hoje só roda localmente).
 3. Trocar o `NoSecurity` do demo OPC-UA por uma política de segurança real
    (certificado X.509) antes de conectar a qualquer rede que não seja um laboratório
    isolado.

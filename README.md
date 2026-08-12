@@ -140,3 +140,16 @@ Esses dois casos ilustram o mesmo padrão: o sistema de controle em operação n
    python demo_integracao_opcua.py
    ```
    Salva `integracao_opcua.png`, mostrando o MPC operando o reator através de leituras e escritas de rede reais, não chamadas de função em processo.
+
+---
+
+## 🧪 Testes
+
+O pacote `reator_digital_twin/` tem uma suíte de testes automatizados (`pytest`), incluindo testes de integração que sobem um servidor OPC-UA de verdade — não mocks. Vários deles são regressões diretas de bugs reais encontrados construindo a integração (descasamento de relógio planta/controlador, falta de *warm-start* no otimizador, SIS disparando fora de hora — ver histórico de commits).
+
+```bash
+pip install -r requirements-dev.txt
+pytest -v
+```
+
+A suíte cobre carregamento de config (incluindo a pegadinha de notação científica do PyYAML), o modelo físico, os dois MPCs, a detecção de falha, o SIS e o ciclo fechado via OPC-UA. Leva ~2 minutos (a maior parte é tempo real de otimização SLSQP, não overhead de teste) — ainda não está conectada a um pipeline de CI (ver `docs/PROJETO_INDUSTRIAL.md`, seção 8).

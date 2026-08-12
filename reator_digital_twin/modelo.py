@@ -141,16 +141,23 @@ class ReatorCSTR:
                         constraints=[restricao_temp, restricao_taxa], method='SLSQP')
         return res.x
 
-    def calcular_acao_controle(self, CA_atual, T_atual, Tj_anterior, economico=False,
-                                dt_mpc=0.25, Hp=5, UA=None):
+    def calcular_acao_controle(self, CA_atual, T_atual, Tj_anterior, chute_horizonte=None,
+                                economico=False, dt_mpc=0.25, Hp=5, UA=None):
         """Resolve um único passo do MPC (rastreamento ou econômico) a partir do estado
         medido — a interface usada pela camada de integração (OPC-UA) para operar o reator
-        em tempo real, um passo de cada vez, em vez de rodar uma simulação de ponta a ponta."""
+        em tempo real, um passo de cada vez, em vez de rodar uma simulação de ponta a ponta.
+
+        Recebe e devolve `chute_horizonte`, o "warm start" do otimizador (a solução do
+        horizonte anterior, deslocada em um passo) — sem isso, cada chamada recomeça a
+        otimização do zero e o SLSQP (um solver local) tende a convergir para soluções
+        diferentes a cada ciclo, mesmo partindo de estados quase idênticos."""
         UA = self.UA_nominal if UA is None else UA
         funcao_custo = self._custo_economico if economico else self._custo_mpc
-        chute_Tj = [Tj_anterior] * Hp
-        Tj_otimizado = self._otimizar(funcao_custo, chute_Tj, CA_atual, T_atual, Tj_anterior, dt_mpc, UA)
-        return float(Tj_otimizado[0])
+        if not chute_horizonte or len(chute_horizonte) != Hp:
+            chute_horizonte = [Tj_anterior] * Hp
+        Tj_otimizado = self._otimizar(funcao_custo, chute_horizonte, CA_atual, T_atual, Tj_anterior, dt_mpc, UA)
+        novo_chute = list(Tj_otimizado[1:]) + [Tj_otimizado[-1]]
+        return float(Tj_otimizado[0]), novo_chute
 
     def rodar_mpc(self, UA=None, tempo_total=20, dt_mpc=0.25, Hp=5):
         UA = self.UA_nominal if UA is None else UA

@@ -1,6 +1,8 @@
 # 🏭 Gêmeo Digital Dinâmico e Controle Avançado de um Reator CSTR Não-Isotérmico
 
-Este repositório contém o ecossistema completo de um **Gêmeo Digital (Digital Twin)** para um reator químico de mistura contínua (CSTR) operando sob reação exotérmica não-linear. O projeto aborda a modelagem rigorosa dos balanços de massa e energia, simulação de falhas operacionais (*thermal runaway*), controle preditivo multivariável (MPC) de rastreamento **e econômico (Economic MPC)** com restrições de segurança, sensores virtuais (*soft sensors*) baseados em Aprendizado Profundo, detecção de falhas por resíduo (*fault detection*) e uma camada de proteção independente (SIS) inspirada em práticas reais de segurança de processo (HAZOP/LOPA, IEC 61511) — aplicável a plantas de polimerização, química fina, farmacêutica e petroquímica.
+Este repositório contém o ecossistema completo de um **Gêmeo Digital (Digital Twin)** para um reator químico de mistura contínua (CSTR) operando sob reação exotérmica não-linear. O projeto aborda a modelagem rigorosa dos balanços de massa e energia, simulação de falhas operacionais (*thermal runaway*), controle preditivo multivariável (MPC) de rastreamento **e econômico (Economic MPC)** com restrições de segurança, sensores virtuais (*soft sensors*) baseados em Aprendizado Profundo, detecção de falhas por resíduo (*fault detection*), uma camada de proteção independente (SIS) inspirada em práticas reais de segurança de processo (HAZOP/LOPA, IEC 61511) e uma camada de integração via **OPC-UA** (o protocolo padrão para conectar a um DCS/historiador real) — aplicável a plantas de polimerização, química fina, farmacêutica e petroquímica.
+
+📄 **[Projeto Industrial Completo](docs/PROJETO_INDUSTRIAL.md)** — arquitetura, roadmap de implantação (simulação → shadow mode → piloto → produção), requisitos técnicos e caso de negócio para levar isto a uma planta real.
 
 ---
 
@@ -68,6 +70,23 @@ Desempenho da malha fechada mantendo o reator no setpoint estipulado ($330\text{
 
 ---
 
+## 🏗️ Arquitetura e Integração com Planta Real
+
+O código foi reorganizado em um pacote configurável, `reator_digital_twin/`, para que o mesmo gêmeo digital sirva plantas reais diferentes só trocando um arquivo de configuração — sem tocar em modelagem, controle ou segurança:
+
+- **`reator_digital_twin/config.py`** — todos os parâmetros de planta (cinética, atuador, economia) vêm de uma `ConfiguracaoReator`, carregável de YAML (`configs/reator_padrao.yaml`, usado pelas demos; `configs/exemplo_planta_industrial.yaml`, um segundo exemplo em escala industrial, provando a reutilização).
+- **`reator_digital_twin/modelo.py`** — a física, o MPC e o SIS, incluindo `calcular_acao_controle()`: resolve um único passo do MPC a partir do estado medido, a interface que a integração em tempo real usa (em vez de rodar uma simulação de ponta a ponta).
+- **`reator_digital_twin/integracao/`** — um servidor e um cliente **OPC-UA** reais (biblioteca `asyncua`), demonstrando a arquitetura de conexão com uma planta real: o servidor representa o DCS/historiador (publica `PV_Temperatura`, `PV_ConcentracaoA` e expõe o método `AvancarPasso`); o gateway é um processo separado que lê o estado, resolve o MPC e aciona a planta — o mesmo padrão usado por soluções comerciais de APC (Aspen DMC3, Honeywell Profit Controller) para se conectar a um DCS.
+
+Rode a demonstração de integração (servidor e cliente como processos de verdade, comunicando só por rede):
+```bash
+python demo_integracao_opcua.py
+```
+
+Ver **[docs/PROJETO_INDUSTRIAL.md](docs/PROJETO_INDUSTRIAL.md)** para o roadmap completo de como isso evolui de simulação para uma implantação real — incluindo por que o SIS deste repositório é conceitual, não um sistema certificado (IEC 61508/61511), e o que precisa ser validado antes de conectar a uma planta de verdade.
+
+---
+
 ## 🏭 Aplicações Industriais
 
 Um CSTR não-isotérmico com risco de fuga térmica não é um exercício acadêmico isolado — é o núcleo de processos usados hoje em vários segmentos da indústria química e de processos:
@@ -99,14 +118,15 @@ Esses dois casos ilustram o mesmo padrão: o sistema de controle em operação n
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/danielschmitt-ia/digital-twin-cstr.git
-   cd digital-twin-cstr
+   git clone https://github.com/danielschmitt-ia/chemical-engineering.git
+   cd chemical-engineering
    ```
 
 2. Instale as dependências:
    ```bash
    pip install -r requirements.txt
    ```
+   Se o `asyncua` falhar por conflito com o pacote `cryptography` do sistema (comum em algumas distros Linux), rode antes: `pip install --upgrade --ignore-installed cryptography`.
 
 3. Execute a simulação integrada:
    ```bash
@@ -114,3 +134,9 @@ Esses dois casos ilustram o mesmo padrão: o sistema de controle em operação n
    ```
 
    O script imprime no console o instante em que uma eventual falha de fouling é detectada, o instante em que o SIS dispara e o lucro acumulado do Economic MPC, e exibe/salva 5 figuras: fuga térmica (`estabilidade_runaway.png`), MPC com restrições de segurança e soft sensor (`mpc_softsensor.png`), degradação do `UA` e resíduo de detecção de falha (`deteccao_falha.png`), comparação com/sem camada de proteção independente (`interlock_seguranca.png`) e o Economic MPC (`economic_mpc.png`).
+
+4. (Opcional) Rode a demonstração de integração via OPC-UA (servidor e cliente reais, processos separados):
+   ```bash
+   python demo_integracao_opcua.py
+   ```
+   Salva `integracao_opcua.png`, mostrando o MPC operando o reator através de leituras e escritas de rede reais, não chamadas de função em processo.

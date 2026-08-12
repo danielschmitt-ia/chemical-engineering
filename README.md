@@ -1,6 +1,6 @@
 # 🏭 Gêmeo Digital Dinâmico e Controle Avançado de um Reator CSTR Não-Isotérmico
 
-Este repositório contém o ecossistema completo de um **Gêmeo Digital (Digital Twin)** para um reator químico de mistura contínua (CSTR) operando sob reação exotérmica não-linear. O projeto aborda a modelagem rigorosa dos balanços de massa e energia, simulação de falhas operacionais (*thermal runaway*), controle preditivo multivariável (MPC) com restrições de segurança, sensores virtuais (*soft sensors*) baseados em Aprendizado Profundo, detecção de falhas por resíduo (*fault detection*) e uma camada de proteção independente (SIS) inspirada em práticas reais de segurança de processo (HAZOP/LOPA, IEC 61511) — aplicável a plantas de polimerização, química fina, farmacêutica e petroquímica.
+Este repositório contém o ecossistema completo de um **Gêmeo Digital (Digital Twin)** para um reator químico de mistura contínua (CSTR) operando sob reação exotérmica não-linear. O projeto aborda a modelagem rigorosa dos balanços de massa e energia, simulação de falhas operacionais (*thermal runaway*), controle preditivo multivariável (MPC) de rastreamento **e econômico (Economic MPC)** com restrições de segurança, sensores virtuais (*soft sensors*) baseados em Aprendizado Profundo, detecção de falhas por resíduo (*fault detection*) e uma camada de proteção independente (SIS) inspirada em práticas reais de segurança de processo (HAZOP/LOPA, IEC 61511) — aplicável a plantas de polimerização, química fina, farmacêutica e petroquímica.
 
 ---
 
@@ -39,6 +39,18 @@ O gêmeo digital também monitora a saúde do processo: um cenário dedicado sim
 Restrições dentro do MPC só são tão boas quanto o modelo em que se baseiam. Para representar esse risco, simulamos um descasamento de modelo: o MPC otimiza assumindo a cinética nominal, mas a planta real segue uma cinética mais severa (uma impureza ou reação secundária não prevista — a causa raiz clássica dos incidentes reais citados abaixo). Sem proteção adicional, o reator dispara para ~424 K antes de a reação se autolimitar. Um **SIS (Sistema Instrumentado de Segurança)** — um trip *hard-wired*, independente do modelo do MPC, que força resfriamento máximo ao cruzar um limite de temperatura — contém o mesmo cenário em ~320 K, seguindo o princípio de *layers of protection* da norma IEC 61511:
 
 ![Camada de Proteção Independente (SIS)](interlock_seguranca.png)
+
+---
+
+## 💰 Economic MPC
+
+O MPC de rastreamento persegue um setpoint fixo ($330\text{ K}$) escolhido *a priori* por um engenheiro. Mas esse setpoint é só uma aproximação do que realmente importa para a planta: o resultado econômico. O **Economic MPC** (`rodar_mpc_economico`) substitui o custo de rastreamento por um custo econômico direto a cada passo do horizonte — receita pela conversão de $A$ menos custo energético da carga térmica da jaqueta — mantendo as mesmas restrições de segurança (teto de temperatura e taxa do atuador) do MPC de rastreamento:
+
+$$\text{custo} = \text{custo\_energia} \cdot |UA(T_j - T)| \cdot \Delta t - \text{preço\_produto} \cdot \Delta n_A$$
+
+Com os parâmetros ilustrativos deste projeto, o Economic MPC descobre sozinho que vale a pena operar a ~336-337 K — *acima* do setpoint fixo de 330 K, mas com margem segura abaixo do teto de segurança — porque a receita extra da conversão mais rápida supera o custo energético adicional. Trocar os preços (`preco_produto`, `custo_energia`) desloca esse ponto ótimo, sem precisar reajustar setpoint nenhum manualmente:
+
+![Economic MPC](economic_mpc.png)
 
 ---
 
@@ -101,4 +113,4 @@ Esses dois casos ilustram o mesmo padrão: o sistema de controle em operação n
    python main.py
    ```
 
-   O script imprime no console o instante em que uma eventual falha de fouling é detectada e o instante em que o SIS dispara, e exibe/salva 4 figuras: fuga térmica (`estabilidade_runaway.png`), MPC com restrições de segurança e soft sensor (`mpc_softsensor.png`), degradação do `UA` e resíduo de detecção de falha (`deteccao_falha.png`), e a comparação com/sem camada de proteção independente (`interlock_seguranca.png`).
+   O script imprime no console o instante em que uma eventual falha de fouling é detectada, o instante em que o SIS dispara e o lucro acumulado do Economic MPC, e exibe/salva 5 figuras: fuga térmica (`estabilidade_runaway.png`), MPC com restrições de segurança e soft sensor (`mpc_softsensor.png`), degradação do `UA` e resíduo de detecção de falha (`deteccao_falha.png`), comparação com/sem camada de proteção independente (`interlock_seguranca.png`) e o Economic MPC (`economic_mpc.png`).

@@ -22,6 +22,8 @@ class ReatorCSTR:
         self.taxa_max_Tj = 5.0     # Limite de variação de Tj por passo de controle (K)
         self.T_trip_sis = 320.0    # Setpoint do interlock (SIS), com margem abaixo do ponto sem retorno (K)
         self.Tj_seguranca = 240.0  # Ação do interlock: resfriamento máximo da jaqueta (K)
+        self.preco_produto = 50.0    # Receita por mol de A convertido ($/mol), ilustrativo
+        self.custo_energia = 2e-5    # Custo da carga térmica da jaqueta ($ por unidade de energia), ilustrativo
 
     def calcular_cinetica(self, CA, T):
         k = self.Pre_exp_A * np.exp(-self.Ea_R / T)
@@ -104,16 +106,31 @@ class ReatorCSTR:
     def _rollout_mpc(self, acoes_Tj, CA_atual, T_atual, dt_mpc, UA):
         CA_pred, T_pred = CA_atual, T_atual
         T_hist = np.zeros(len(acoes_Tj))
+        CA_hist = np.zeros(len(acoes_Tj))
         for idx, Tj_predito in enumerate(acoes_Tj):
             CA_pred, T_pred = self._rk4_step(CA_pred, T_pred, Tj_predito, UA, dt_mpc)
             T_hist[idx] = T_pred
-        return CA_pred, T_hist
+            CA_hist[idx] = CA_pred
+        return CA_pred, T_hist, CA_hist
 
     def _custo_mpc(self, acoes_Tj, CA_atual, T_atual, dt_mpc, UA):
-        _, T_pred = self._rollout_mpc(acoes_Tj, CA_atual, T_atual, dt_mpc, UA)
+        # Rastreamento de setpoint: minimiza o desvio da temperatura em relação a T_alvo.
+        _, T_pred, _ = self._rollout_mpc(acoes_Tj, CA_atual, T_atual, dt_mpc, UA)
         return float(np.sum((T_pred - self.T_alvo) ** 2))
 
-    def _otimizar_mpc(self, chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA):
+    def _custo_economico(self, acoes_Tj, CA_atual, T_atual, dt_mpc, UA):
+        # Economic MPC: minimiza custo líquido (energia da jaqueta menos receita da
+        # conversão), em vez de perseguir um setpoint de temperatura fixo e arbitrário.
+        _, T_hist, CA_hist = self._rollout_mpc(acoes_Tj, CA_atual, T_atual, dt_mpc, UA)
+        CA_anterior = np.concatenate(([CA_atual], CA_hist[:-1]))
+        producao = (CA_anterior - CA_hist) * self.V  # mol de A convertidos por passo
+        # UA*(Tj-T) é uma taxa (energia/min); multiplica por dt_mpc para obter a energia
+        # efetivamente gasta naquele passo, na mesma base da produção por passo.
+        carga_termica = np.abs(UA * (np.asarray(acoes_Tj) - T_hist)) * dt_mpc
+        custo = self.custo_energia * carga_termica - self.preco_produto * producao
+        return float(np.sum(custo))
+
+    def _otimizar(self, funcao_custo, chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA):
         # Restrição de segurança: a trajetória prevista não pode ultrapassar o teto térmico.
         restricao_temp = NonlinearConstraint(
             lambda x, CA=CA_real, T=T_real: self.T_max_seguro - self._rollout_mpc(x, CA, T, dt_mpc, UA)[1],
@@ -123,7 +140,7 @@ class ReatorCSTR:
             lambda x, Tj_ant=Tj_anterior: np.diff(np.concatenate(([Tj_ant], x))),
             -self.taxa_max_Tj, self.taxa_max_Tj)
 
-        res = minimize(self._custo_mpc, chute_Tj, args=(CA_real, T_real, dt_mpc, UA),
+        res = minimize(funcao_custo, chute_Tj, args=(CA_real, T_real, dt_mpc, UA),
                         bounds=[(240.0, 350.0)] * len(chute_Tj),
                         constraints=[restricao_temp, restricao_taxa], method='SLSQP')
         return res.x
@@ -140,7 +157,7 @@ class ReatorCSTR:
         for i in range(passos):
             hist_T[i], hist_Tj[i], hist_CA[i] = T_real, chute_Tj[0], CA_real
 
-            Tj_otimizado = self._otimizar_mpc(chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA)
+            Tj_otimizado = self._otimizar(self._custo_mpc, chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA)
             Tj_otimo = Tj_otimizado[0]
             chute_Tj = list(Tj_otimizado[1:]) + [Tj_otimizado[-1]]
 
@@ -148,6 +165,37 @@ class ReatorCSTR:
             Tj_anterior = Tj_otimo
 
         return hist_tempo, hist_T, hist_Tj, hist_CA
+
+    def rodar_mpc_economico(self, UA=50000.0, tempo_total=20, dt_mpc=0.25, Hp=5):
+        """Economic MPC: em vez de perseguir um setpoint de temperatura fixo e arbitrário
+        (`T_alvo`), otimiza diretamente o resultado econômico — receita pela conversão de A
+        menos custo energético da jaqueta —, respeitando as mesmas restrições de segurança
+        (teto de temperatura e taxa do atuador) do MPC de rastreamento. Ilustra por que um
+        setpoint fixo é só uma aproximação do que realmente importa para a planta."""
+        passos = int(tempo_total / dt_mpc)
+        hist_tempo = np.linspace(0, tempo_total, passos)
+        hist_T, hist_Tj, hist_CA = np.zeros(passos), np.zeros(passos), np.zeros(passos)
+        hist_lucro = np.zeros(passos)
+
+        CA_real, T_real = 2.0, 300.0
+        chute_Tj = [290.0] * Hp
+        Tj_anterior = 290.0
+
+        for i in range(passos):
+            hist_T[i], hist_Tj[i], hist_CA[i] = T_real, chute_Tj[0], CA_real
+
+            Tj_otimizado = self._otimizar(self._custo_economico, chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA)
+            Tj_otimo = Tj_otimizado[0]
+            chute_Tj = list(Tj_otimizado[1:]) + [Tj_otimizado[-1]]
+
+            CA_anterior = CA_real
+            CA_real, T_real = self._rk4_step(CA_real, T_real, Tj_otimo, UA, dt_mpc)
+            producao = (CA_anterior - CA_real) * self.V
+            carga_termica = abs(UA * (Tj_otimo - T_real)) * dt_mpc
+            hist_lucro[i] = self.preco_produto * producao - self.custo_energia * carga_termica
+            Tj_anterior = Tj_otimo
+
+        return hist_tempo, hist_T, hist_Tj, hist_CA, np.cumsum(hist_lucro)
 
     def rodar_mpc_com_deteccao_falha(self, UA_inicial=50000.0, taxa_fouling=-1200.0, UA_minima=15000.0,
                                       tempo_total=40, dt_mpc=0.25, Hp=5,
@@ -183,7 +231,7 @@ class ReatorCSTR:
 
             hist_T[i], hist_Tj[i] = T_real, chute_Tj[0]
 
-            Tj_otimizado = self._otimizar_mpc(chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA_inicial)
+            Tj_otimizado = self._otimizar(self._custo_mpc, chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA_inicial)
             Tj_otimo = Tj_otimizado[0]
             chute_Tj = list(Tj_otimizado[1:]) + [Tj_otimizado[-1]]
 
@@ -220,7 +268,7 @@ class ReatorCSTR:
         for i in range(passos):
             hist_T[i] = T_real
 
-            Tj_otimizado = self._otimizar_mpc(chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA)
+            Tj_otimizado = self._otimizar(self._custo_mpc, chute_Tj, CA_real, T_real, Tj_anterior, dt_mpc, UA)
             Tj_otimo = Tj_otimizado[0]
             chute_Tj = list(Tj_otimizado[1:]) + [Tj_otimizado[-1]]
 
@@ -281,6 +329,12 @@ if __name__ == "__main__":
     else:
         print("✅ SIS não precisou intervir no horizonte simulado.")
 
+    print("💰 Executando Economic MPC (otimização direta de lucro)...")
+    t5, T_economico, Tj_economico, CA_economico, lucro_acumulado = reator.rodar_mpc_economico(tempo_total=25)
+    print(f"💵 Lucro acumulado (Economic MPC, 25 min): ${lucro_acumulado[-1]:.0f} "
+          f"| temperatura de operação encontrada ≈ {T_economico[-5:].mean():.1f} K "
+          f"(setpoint fixo do MPC de rastreamento: {reator.T_alvo:.0f} K)")
+
     fig1, ax1 = plt.subplots(figsize=(10, 5))
     ax1.plot(t1, T_seguro, label='Seguro')
     ax1.plot(t1, T_critico, '--', label='Runaway')
@@ -331,5 +385,18 @@ if __name__ == "__main__":
     ax4.set_xlabel('Tempo (min)'); ax4.set_ylabel('Temperatura (K)')
     ax4.legend(); ax4.grid(True)
     fig4.tight_layout(); fig4.savefig('interlock_seguranca.png', dpi=150)
+
+    fig5, axs5 = plt.subplots(2, 1, figsize=(10, 8))
+    axs5[0].plot(t5, T_economico, color='teal', label='T (Economic MPC)')
+    axs5[0].axhline(y=reator.T_alvo, color='black', linestyle=':', label='Setpoint fixo (MPC de rastreamento)')
+    axs5[0].axhline(y=reator.T_max_seguro, color='red', linestyle='--', label='Teto de segurança')
+    axs5[0].set_title('Economic MPC: temperatura encontrada ao otimizar lucro, não um setpoint fixo')
+    axs5[0].legend(); axs5[0].grid(True)
+
+    axs5[1].plot(t5, lucro_acumulado, color='darkgreen', label='Lucro acumulado')
+    axs5[1].set_title('Lucro Acumulado (receita pela conversão menos custo energético da jaqueta)')
+    axs5[1].set_xlabel('Tempo (min)'); axs5[1].set_ylabel('$ (ilustrativo)')
+    axs5[1].legend(); axs5[1].grid(True)
+    fig5.tight_layout(); fig5.savefig('economic_mpc.png', dpi=150)
 
     plt.show()

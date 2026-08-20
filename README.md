@@ -176,6 +176,18 @@ Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções 
 - **`fta_arvore_falhas.py`** — combinação de probabilidades por portas E/OU em uma árvore de falhas (verificada a dualidade E/OU para um sistema redundante).
 - *Segurança de processo industrial* (HAZOP/LOPA), *comissionamento*, *descomissionamento*, *gestão de mudanças (MOC)*, *manutenção preditiva/proativa*, *MCC/RCM*, *manuseio de produtos perigosos* e *gestão de ativos* — metodologia e prática de engenharia de segurança, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
 
+### Área 9 — Sustentabilidade, Meio Ambiente e Transição Energética
+
+- **`integracao_processos_pinch.py`** — o Problem Table Algorithm (Linnhoff) completo: metas de utilidade quente/fria mínimas e temperatura de pinch, verificado contra um caso resolvido manualmente e contra o fechamento do balanço de energia global.
+- **`tratamento_efluentes.py`** — eficiência de remoção e carga poluente.
+- **`balanco_carbono.py`** — emissão de CO2 por balanço de massa do carbono, e intensidade de carbono.
+- **`captura_carbono_ccs.py`** — eficiência de captura e emissão evitada líquida (descontando a penalidade energética da própria captura).
+- **`eficiencia_energetica.py`** — consumo específico de energia (SEC).
+- **`metricas_hidricas.py`** — intensidade hídrica e taxa de reúso de água.
+- **`quimica_verde.py`** — economia atômica (Trost).
+- **`pirolise_gaseificacao.py`** — eficiência de gás frio (cold gas efficiency).
+- *ACV*, *biocombustíveis/biorrefinarias* (a aplicação de biodiesel já implementada em `reator_digital_twin`), *células de combustível/H2 verde*, *licenciamento ambiental* e *tratamento de gases de exaustão* (mesma base de `absorcao_stripping.py`) — metodologia e regulamentação, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
+
 Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
 
 ```python

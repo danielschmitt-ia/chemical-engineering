@@ -22,7 +22,9 @@ from .balanco_energia import (
     energia_potencial_especifica,
     residuo_balanco_energia_global,
 )
+from .balanco_carbono import emissao_co2_combustao, intensidade_carbono
 from .balanco_massa import divisor, misturador, residuo_balanco_massa_global, vazao_desconhecida
+from .captura_carbono_ccs import eficiencia_captura, emissao_evitada
 from .centrifugacao import forca_g_centrifuga, velocidade_sedimentacao_centrifuga
 from .bioreatores import (
     biomassa_crescimento_exponencial,
@@ -97,6 +99,7 @@ from .fluidizacao import (
 )
 from .filtragem import taxa_filtracao, tempo_filtracao_pressao_constante
 from .geracao_vapor import eficiencia_caldeira, eficiencia_global_cogeracao, heat_rate_cogeracao
+from .eficiencia_energetica import consumo_especifico_energia
 from .fmea_rpn import numero_prioridade_risco
 from .fta_arvore_falhas import probabilidade_porta_e, probabilidade_porta_ou
 from .fracao_molar import (
@@ -105,11 +108,13 @@ from .fracao_molar import (
     massa_molar_media,
     pressao_parcial,
 )
+from .integracao_processos_pinch import tabela_problema_pinch
 from .hidrodinamica_colunas import (
     parametro_fluxo_fair,
     velocidade_inundacao_souders_brown,
 )
 from .lixiviacao import concentracao_lixiviado, rendimento_lixiviacao_estagio_ideal
+from .metricas_hidricas import intensidade_hidrica, taxa_reuso_agua
 from .mecanica_fluidos import (
     numero_reynolds_particula,
     potencia_eixo_bomba,
@@ -125,6 +130,7 @@ from .membranas import (
 from .mistura_agitacao import numero_froude_agitacao, numero_reynolds_agitacao, potencia_agitador
 from .moagem import energia_lei_bond, energia_lei_kick, energia_lei_rittinger
 from .peneiramento import eficiencia_peneiramento
+from .pirolise_gaseificacao import eficiencia_gas_frio
 from .psicrometria import (
     approach_torre_resfriamento,
     range_torre_resfriamento,
@@ -158,6 +164,7 @@ from .scale_up import (
     velocidade_escala_potencia_por_volume_constante,
     velocidade_escala_reynolds_constante,
 )
+from .quimica_verde import economia_atomica
 from .secagem import tempo_secagem_taxa_constante, tempo_secagem_taxa_decrescente, tempo_secagem_total
 from .seguranca_instrumentada_sil import nivel_sil_a_partir_de_pfd, pfd_media_1oo1
 from .sedimentacao import fluxo_massico_solidos, velocidade_sedimentacao_dificultada
@@ -192,6 +199,7 @@ from .valvulas_controle import (
     vazao_valvula_controle,
 )
 from .tratamento_agua_caldeira import ciclos_concentracao, vazao_purga
+from .tratamento_efluentes import carga_poluente, eficiencia_remocao
 from .transferencia_massa import (
     altura_unidade_transferencia,
     fluxo_convectivo_massa,
@@ -203,6 +211,26 @@ from .transferencia_massa import (
 )
 
 __all__ = [
+    # tratamento_efluentes
+    "carga_poluente",
+    "eficiencia_remocao",
+    # balanco_carbono
+    "emissao_co2_combustao",
+    "intensidade_carbono",
+    # eficiencia_energetica
+    "consumo_especifico_energia",
+    # integracao_processos_pinch
+    "tabela_problema_pinch",
+    # quimica_verde
+    "economia_atomica",
+    # captura_carbono_ccs
+    "eficiencia_captura",
+    "emissao_evitada",
+    # metricas_hidricas
+    "intensidade_hidrica",
+    "taxa_reuso_agua",
+    # pirolise_gaseificacao
+    "eficiencia_gas_frio",
     # confiabilidade_ram
     "confiabilidade_exponencial",
     "disponibilidade",

@@ -133,6 +133,19 @@ Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções 
 - **`transferencia_calor.py`** — calor sensível, coeficiente global de troca térmica U (resistências em série, com incrustação opcional) e dimensionamento de trocadores pelo método da diferença de temperatura média logarítmica (DTML/LMTD), para arranjo co-corrente ou contracorrente.
 - **`destilacao.py`** — separação binária a volatilidade relativa constante: curva de equilíbrio, número mínimo de estágios (Fenske), refluxo mínimo (Underwood), estimativa de estágios reais (correlação de Gilliland) e contagem exata de estágios ideais pelo método algébrico de McCabe-Thiele.
 
+### Área 4 — Operações Unitárias de Sólidos e Térmicas
+
+- **`filtragem.py`** — filtração em torta a pressão constante (equação de Ruth): taxa instantânea e tempo de filtração, resistência da torta em série com a do meio filtrante.
+- **`secagem.py`** — tempo de secagem no período de taxa constante e no período de taxa decrescente (aproximação linear).
+- **`mistura_agitacao.py`** — números de Reynolds e Froude de agitação, e potência do agitador a partir do número de potência.
+- **`lixiviacao.py`** — modelo de estágio ideal para lixiviação/extração sólido-líquido (concentração uniforme, rendimento pela fração de líquido retida no underflow).
+- **`evaporacao.py`** — balanço de massa de um evaporador de efeito único e economia de vapor.
+- **`moagem.py`** — as três leis clássicas de cominuição: Kick, Rittinger e Bond (a mais usada industrialmente).
+- **`peneiramento.py`** — eficiência de peneiramento por balanço de massa do material fino.
+- **`sedimentacao.py`** — correção de Richardson-Zaki para sedimentação dificultada e fluxo mássico de sólidos (dimensionamento de espessadores).
+- **`centrifugacao.py`** — força g centrífuga e velocidade de sedimentação sob campo centrífugo (Stokes com ω²r no lugar de g) — verificada contra `mecanica_fluidos.velocidade_terminal_stokes` (a razão entre as duas é exatamente a força g).
+- *Transferência de calor* e *fluidização* já cobertas por `transferencia_calor.py` (acima) e `fluidizacao.py` (Área 2).
+
 Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
 
 ```python

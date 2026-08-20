@@ -23,6 +23,7 @@ from .balanco_energia import (
     residuo_balanco_energia_global,
 )
 from .balanco_massa import divisor, misturador, residuo_balanco_massa_global, vazao_desconhecida
+from .centrifugacao import forca_g_centrifuga, velocidade_sedimentacao_centrifuga
 from .bioreatores import (
     biomassa_crescimento_exponencial,
     rendimento_biomassa_substrato,
@@ -78,6 +79,7 @@ from .destilacao import (
     refluxo_minimo,
     volatilidade_relativa,
 )
+from .evaporacao import concentracao_final_evaporador, economia_vapor, vapor_gerado_evaporador
 from .extracao_liquido_liquido import (
     coeficiente_distribuicao,
     estagios_necessarios_extracao,
@@ -90,6 +92,7 @@ from .fluidizacao import (
     queda_pressao_leito_fluidizado,
     velocidade_minima_fluidizacao,
 )
+from .filtragem import taxa_filtracao, tempo_filtracao_pressao_constante
 from .fracao_molar import (
     fracao_massica_a_partir_molar,
     fracao_molar_a_partir_massica,
@@ -100,6 +103,7 @@ from .hidrodinamica_colunas import (
     parametro_fluxo_fair,
     velocidade_inundacao_souders_brown,
 )
+from .lixiviacao import concentracao_lixiviado, rendimento_lixiviacao_estagio_ideal
 from .mecanica_fluidos import (
     numero_reynolds_particula,
     potencia_eixo_bomba,
@@ -112,6 +116,9 @@ from .membranas import (
     fluxo_permeado,
     seletividade_ideal,
 )
+from .mistura_agitacao import numero_froude_agitacao, numero_reynolds_agitacao, potencia_agitador
+from .moagem import energia_lei_bond, energia_lei_kick, energia_lei_rittinger
+from .peneiramento import eficiencia_peneiramento
 from .perda_carga import (
     fator_atrito_darcy,
     numero_reynolds,
@@ -131,6 +138,8 @@ from .reatores_leito_fixo import (
     modulo_thiele_esfera,
     queda_pressao_ergun,
 )
+from .secagem import tempo_secagem_taxa_constante, tempo_secagem_taxa_decrescente, tempo_secagem_total
+from .sedimentacao import fluxo_massico_solidos, velocidade_sedimentacao_dificultada
 from .reologia import (
     fator_atrito_laminar_lei_potencia,
     reynolds_generalizado_lei_potencia,
@@ -166,6 +175,36 @@ from .transferencia_massa import (
 )
 
 __all__ = [
+    # filtragem
+    "taxa_filtracao",
+    "tempo_filtracao_pressao_constante",
+    # secagem
+    "tempo_secagem_taxa_constante",
+    "tempo_secagem_taxa_decrescente",
+    "tempo_secagem_total",
+    # mistura_agitacao
+    "numero_froude_agitacao",
+    "numero_reynolds_agitacao",
+    "potencia_agitador",
+    # lixiviacao
+    "concentracao_lixiviado",
+    "rendimento_lixiviacao_estagio_ideal",
+    # evaporacao
+    "concentracao_final_evaporador",
+    "economia_vapor",
+    "vapor_gerado_evaporador",
+    # moagem
+    "energia_lei_bond",
+    "energia_lei_kick",
+    "energia_lei_rittinger",
+    # peneiramento
+    "eficiencia_peneiramento",
+    # sedimentacao
+    "fluxo_massico_solidos",
+    "velocidade_sedimentacao_dificultada",
+    # centrifugacao
+    "forca_g_centrifuga",
+    "velocidade_sedimentacao_centrifuga",
     # transferencia_massa
     "altura_unidade_transferencia",
     "fluxo_convectivo_massa",

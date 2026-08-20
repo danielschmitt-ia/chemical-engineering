@@ -92,6 +92,29 @@ Ver **[docs/PROJETO_INDUSTRIAL.md](docs/PROJETO_INDUSTRIAL.md)** para o roadmap 
 
 ---
 
+## 🧮 Ferramentas de Cálculo de Processo
+
+Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções independentes para os cálculos clássicos de engenharia de processos químicos — úteis tanto isoladamente (ex.: dimensionar uma tubulação) quanto como apoio à modelagem de um fluxograma completo:
+
+- **`balanco_massa.py`** — fechamento de balanço de massa global (`vazao_desconhecida`, `residuo_balanco_massa_global`) e as duas operações unitárias não-reativas mais comuns: misturador (`misturador`) e divisor de corrente/splitter (`divisor`).
+- **`perda_carga.py`** — perda de carga em tubulações pela equação de Darcy-Weisbach: número de Reynolds, fator de atrito (laminar exato, turbulento via correlação explícita de Swamee-Jain), perda distribuída e localizada (acessórios, método K).
+- **`transferencia_calor.py`** — calor sensível, coeficiente global de troca térmica U (resistências em série, com incrustação opcional) e dimensionamento de trocadores pelo método da diferença de temperatura média logarítmica (DTML/LMTD), para arranjo co-corrente ou contracorrente.
+- **`destilacao.py`** — separação binária a volatilidade relativa constante: curva de equilíbrio, número mínimo de estágios (Fenske), refluxo mínimo (Underwood), estimativa de estágios reais (correlação de Gilliland) e contagem exata de estágios ideais pelo método algébrico de McCabe-Thiele.
+- **`conversao.py`** — conversão de reagentes, reagente limitante, grau de avanço (extensão) da reação, seletividade e rendimento — para reações com subprodutos.
+- **`fracao_molar.py`** — massa molar média de uma mistura, conversão entre fração mássica e molar, e pressão parcial (lei de Dalton).
+
+Cada função é independente e testada isoladamente (`tests/test_balanco_massa.py`, `tests/test_perda_carga.py`, `tests/test_transferencia_calor.py`, `tests/test_destilacao.py`, `tests/test_conversao.py`, `tests/test_fracao_molar.py`) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
+
+```python
+from calculos_processo import numero_reynolds, fator_atrito_darcy, perda_carga_total
+
+resultado = perda_carga_total(vazao_volumetrica=0.02, D=0.1, L=100.0, rho=1000.0, mu=1e-3,
+                               rugosidade_absoluta=4.5e-5, K_total=6.0)
+print(resultado["delta_p_total"])  # Pa
+```
+
+---
+
 ## 🏭 Aplicações Industriais
 
 Um CSTR não-isotérmico com risco de fuga térmica não é um exercício acadêmico isolado — é o núcleo de processos usados hoje em vários segmentos da indústria química e de processos:

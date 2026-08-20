@@ -160,6 +160,14 @@ Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções 
 - *Modelagem e simulação de processos* — o repositório inteiro é o estudo de caso (RK45 adaptativo vs. RK4 de passo fixo no `reator_digital_twin`); ver [`docs/areas_processo/modelagem_simulacao_processos.md`](docs/areas_processo/modelagem_simulacao_processos.md).
 - *Especificação de equipamentos*, *CFD*, *P&ID*, *PFD* e *layout de planta* — convenções de representação e prática de projeto, não cálculo isolado; ver as notas correspondentes em [`docs/areas_processo/`](docs/areas_processo/).
 
+### Área 7 — Utilidades e Infraestrutura Industrial
+
+- **`geracao_vapor.py`** — eficiência de caldeira pelo método direto, heat rate e eficiência global de cogeração.
+- **`refrigeracao.py`** — COP real e o limite teórico de Carnot (refrigeração e bomba de calor).
+- **`tratamento_agua_caldeira.py`** — ciclos de concentração e vazão de purga (blowdown).
+- **`psicrometria.py`** — razão de umidade, umidade relativa, e range/approach de torre de resfriamento.
+- *Utilidades e sistemas auxiliares* — a integração desses sistemas mais os que ficam fora de fórmula fechada (ar comprimido, distribuição elétrica); ver [`docs/areas_processo/utilidades_sistemas_auxiliares.md`](docs/areas_processo/utilidades_sistemas_auxiliares.md).
+
 Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
 
 ```python

@@ -95,6 +95,7 @@ from .fluidizacao import (
     velocidade_minima_fluidizacao,
 )
 from .filtragem import taxa_filtracao, tempo_filtracao_pressao_constante
+from .geracao_vapor import eficiencia_caldeira, eficiencia_global_cogeracao, heat_rate_cogeracao
 from .fracao_molar import (
     fracao_massica_a_partir_molar,
     fracao_molar_a_partir_massica,
@@ -121,6 +122,13 @@ from .membranas import (
 from .mistura_agitacao import numero_froude_agitacao, numero_reynolds_agitacao, potencia_agitador
 from .moagem import energia_lei_bond, energia_lei_kick, energia_lei_rittinger
 from .peneiramento import eficiencia_peneiramento
+from .psicrometria import (
+    approach_torre_resfriamento,
+    range_torre_resfriamento,
+    razao_umidade,
+    umidade_relativa,
+)
+from .refrigeracao import cop_carnot_bomba_calor, cop_carnot_refrigeracao, cop_refrigeracao
 from .perda_carga import (
     fator_atrito_darcy,
     numero_reynolds,
@@ -179,6 +187,7 @@ from .valvulas_controle import (
     cv_necessario,
     vazao_valvula_controle,
 )
+from .tratamento_agua_caldeira import ciclos_concentracao, vazao_purga
 from .transferencia_massa import (
     altura_unidade_transferencia,
     fluxo_convectivo_massa,
@@ -190,6 +199,22 @@ from .transferencia_massa import (
 )
 
 __all__ = [
+    # geracao_vapor
+    "eficiencia_caldeira",
+    "eficiencia_global_cogeracao",
+    "heat_rate_cogeracao",
+    # refrigeracao
+    "cop_carnot_bomba_calor",
+    "cop_carnot_refrigeracao",
+    "cop_refrigeracao",
+    # tratamento_agua_caldeira
+    "ciclos_concentracao",
+    "vazao_purga",
+    # psicrometria
+    "approach_torre_resfriamento",
+    "range_torre_resfriamento",
+    "razao_umidade",
+    "umidade_relativa",
     # scale_up
     "escalonamento_lei_potencia",
     "velocidade_escala_froude_constante",

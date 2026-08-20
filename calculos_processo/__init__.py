@@ -42,6 +42,7 @@ from .cinetica_reatores import (
     tempo_espacial_pfr,
 )
 from .doe_fatorial import efeito_principal, numero_ensaios_fatorial
+from .confiabilidade_ram import confiabilidade_exponencial, disponibilidade, mtbf, mttr, taxa_falha
 from .conversao import (
     grau_avanco,
     mols_a_partir_avanco,
@@ -96,6 +97,8 @@ from .fluidizacao import (
 )
 from .filtragem import taxa_filtracao, tempo_filtracao_pressao_constante
 from .geracao_vapor import eficiencia_caldeira, eficiencia_global_cogeracao, heat_rate_cogeracao
+from .fmea_rpn import numero_prioridade_risco
+from .fta_arvore_falhas import probabilidade_porta_e, probabilidade_porta_ou
 from .fracao_molar import (
     fracao_massica_a_partir_molar,
     fracao_molar_a_partir_massica,
@@ -156,6 +159,7 @@ from .scale_up import (
     velocidade_escala_reynolds_constante,
 )
 from .secagem import tempo_secagem_taxa_constante, tempo_secagem_taxa_decrescente, tempo_secagem_total
+from .seguranca_instrumentada_sil import nivel_sil_a_partir_de_pfd, pfd_media_1oo1
 from .sedimentacao import fluxo_massico_solidos, velocidade_sedimentacao_dificultada
 from .reologia import (
     fator_atrito_laminar_lei_potencia,
@@ -199,6 +203,20 @@ from .transferencia_massa import (
 )
 
 __all__ = [
+    # confiabilidade_ram
+    "confiabilidade_exponencial",
+    "disponibilidade",
+    "mtbf",
+    "mttr",
+    "taxa_falha",
+    # seguranca_instrumentada_sil
+    "nivel_sil_a_partir_de_pfd",
+    "pfd_media_1oo1",
+    # fmea_rpn
+    "numero_prioridade_risco",
+    # fta_arvore_falhas
+    "probabilidade_porta_e",
+    "probabilidade_porta_ou",
     # geracao_vapor
     "eficiencia_caldeira",
     "eficiencia_global_cogeracao",

@@ -168,6 +168,14 @@ Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções 
 - **`psicrometria.py`** — razão de umidade, umidade relativa, e range/approach de torre de resfriamento.
 - *Utilidades e sistemas auxiliares* — a integração desses sistemas mais os que ficam fora de fórmula fechada (ar comprimido, distribuição elétrica); ver [`docs/areas_processo/utilidades_sistemas_auxiliares.md`](docs/areas_processo/utilidades_sistemas_auxiliares.md).
 
+### Área 8 — Segurança de Processo e Confiabilidade
+
+- **`confiabilidade_ram.py`** — MTBF, MTTR, disponibilidade e confiabilidade exponencial R(t).
+- **`seguranca_instrumentada_sil.py`** — PFDavg de uma arquitetura 1oo1 e classificação em nível SIL (IEC 61508); o SIS em si já implementado e testado em `reator_digital_twin/modelo.py` — ver [`docs/areas_processo/sis_intertravamento_seguranca.md`](docs/areas_processo/sis_intertravamento_seguranca.md).
+- **`fmea_rpn.py`** — Número de Prioridade de Risco (RPN = severidade × ocorrência × detecção).
+- **`fta_arvore_falhas.py`** — combinação de probabilidades por portas E/OU em uma árvore de falhas (verificada a dualidade E/OU para um sistema redundante).
+- *Segurança de processo industrial* (HAZOP/LOPA), *comissionamento*, *descomissionamento*, *gestão de mudanças (MOC)*, *manutenção preditiva/proativa*, *MCC/RCM*, *manuseio de produtos perigosos* e *gestão de ativos* — metodologia e prática de engenharia de segurança, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
+
 Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
 
 ```python

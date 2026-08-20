@@ -25,7 +25,7 @@ fórmula genérica.
 Os acidentes reais citados no `README.md` principal deste repositório (T2 Laboratories, Synthron)
 envolveram perda de contenção com liberação de energia — o layout é a última linha de defesa
 física quando as camadas de proteção do processo (MPC, SIS — ver `mpc_controle_preditivo.md` e
-Área 8, `sistemas_intertravamento_seguranca_sis.md`) falham: a distância entre um vaso de risco e
+Área 8, `sis_intertravamento_seguranca.md`) falham: a distância entre um vaso de risco e
 áreas ocupadas determina literalmente quantas pessoas estão na zona de consequência se o pior
 cenário crível (o mesmo tipo de cenário que `reator_digital_twin.simular_runaway` avalia para o
 reator deste repositório) se concretizar.

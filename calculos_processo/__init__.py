@@ -4,6 +4,18 @@ de massa e energia, termodinâmica química, mecânica dos fluidos, reologia nã
 tubulações industriais, perda de carga, transferência de calor, separação por destilação,
 conversão de reagentes e composição de misturas (fração molar/mássica)."""
 
+from .absorcao_stripping import (
+    estagios_necessarios_absorcao,
+    fator_absorcao,
+    fator_esgotamento,
+    fracao_nao_absorvida,
+    fracao_nao_esgotada,
+)
+from .adsorcao_troca_ionica import (
+    isoterma_freundlich,
+    isoterma_langmuir,
+    tempo_ruptura_estequiometrico,
+)
 from .balanco_energia import (
     balanco_energia_escoamento,
     energia_cinetica_especifica,
@@ -38,6 +50,11 @@ from .conversao import (
     seletividade,
 )
 from .conversao import conversao as conversao_reagente
+from .cristalizacao import (
+    crescimento_cristal_lei_delta_L,
+    rendimento_cristalizacao,
+    supersaturacao_relativa,
+)
 from .eletroquimica import (
     eficiencia_corrente,
     massa_produzida_faraday,
@@ -61,6 +78,13 @@ from .destilacao import (
     refluxo_minimo,
     volatilidade_relativa,
 )
+from .extracao_liquido_liquido import (
+    coeficiente_distribuicao,
+    estagios_necessarios_extracao,
+    fator_extracao,
+    fracao_nao_extraida,
+    massa_extraida_estagio_unico,
+)
 from .fluidizacao import (
     numero_arquimedes,
     queda_pressao_leito_fluidizado,
@@ -72,12 +96,21 @@ from .fracao_molar import (
     massa_molar_media,
     pressao_parcial,
 )
+from .hidrodinamica_colunas import (
+    parametro_fluxo_fair,
+    velocidade_inundacao_souders_brown,
+)
 from .mecanica_fluidos import (
     numero_reynolds_particula,
     potencia_eixo_bomba,
     potencia_hidraulica_bomba,
     trabalho_bomba_necessario,
     velocidade_terminal_stokes,
+)
+from .membranas import (
+    coeficiente_rejeicao,
+    fluxo_permeado,
+    seletividade_ideal,
 )
 from .perda_carga import (
     fator_atrito_darcy,
@@ -122,8 +155,52 @@ from .transferencia_calor import (
     dtml_trocador,
     taxa_calor_trocador,
 )
+from .transferencia_massa import (
+    altura_unidade_transferencia,
+    fluxo_convectivo_massa,
+    fluxo_difusivo_fick,
+    forca_motriz_media_log,
+    fracao_nao_recuperada_kremser,
+    numero_estagios_kremser,
+    numero_unidades_transferencia,
+)
 
 __all__ = [
+    # transferencia_massa
+    "altura_unidade_transferencia",
+    "fluxo_convectivo_massa",
+    "fluxo_difusivo_fick",
+    "forca_motriz_media_log",
+    "fracao_nao_recuperada_kremser",
+    "numero_estagios_kremser",
+    "numero_unidades_transferencia",
+    # absorcao_stripping
+    "estagios_necessarios_absorcao",
+    "fator_absorcao",
+    "fator_esgotamento",
+    "fracao_nao_absorvida",
+    "fracao_nao_esgotada",
+    # extracao_liquido_liquido
+    "coeficiente_distribuicao",
+    "estagios_necessarios_extracao",
+    "fator_extracao",
+    "fracao_nao_extraida",
+    "massa_extraida_estagio_unico",
+    # adsorcao_troca_ionica
+    "isoterma_freundlich",
+    "isoterma_langmuir",
+    "tempo_ruptura_estequiometrico",
+    # cristalizacao
+    "crescimento_cristal_lei_delta_L",
+    "rendimento_cristalizacao",
+    "supersaturacao_relativa",
+    # hidrodinamica_colunas
+    "parametro_fluxo_fair",
+    "velocidade_inundacao_souders_brown",
+    # membranas
+    "coeficiente_rejeicao",
+    "fluxo_permeado",
+    "seletividade_ideal",
     # balanco_energia
     "balanco_energia_escoamento",
     "energia_cinetica_especifica",

@@ -120,8 +120,16 @@ Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções 
 - **`eletroquimica.py`** — lei de Faraday da eletrólise (massa/mols produzidos, tempo necessário, eficiência de corrente) e equação de Nernst.
 - *Síntese de produtos químicos finos* — mais uma prática de engenharia (rendimento de rota multi-etapas, scale-up não-trivial, GMP) do que um cálculo isolado; ver [`docs/areas_processo/sintese_quimicos_finos.md`](docs/areas_processo/sintese_quimicos_finos.md).
 
-### Área 3 (parcial) — Transferência de Calor e Separação
+### Área 3 — Operações Unitárias de Separação e Fluidos
 
+- **`transferencia_massa.py`** — lei de Fick, fluxo convectivo, o método HTU/NTU para contactores contínuos, e a equação de Kremser (`fracao_nao_recuperada_kremser`/`numero_estagios_kremser`) para cascatas de estágios de equilíbrio — verificada contra uma simulação numérica direta estágio a estágio, base comum de absorção, esgotamento e extração líquido-líquido.
+- **`absorcao_stripping.py`** — fator de absorção/esgotamento e recuperação por estágios via Kremser.
+- **`extracao_liquido_liquido.py`** — coeficiente de distribuição, extração em estágio único e cascata em contracorrente (mesma equação de Kremser, com o fator de extração).
+- **`adsorcao_troca_ionica.py`** — isotermas de Langmuir e Freundlich, e uma estimativa estequiométrica (limite superior) do tempo de ruptura de um leito.
+- **`cristalizacao.py`** — supersaturação relativa, lei ΔL de McCabe (crescimento independente do tamanho) e rendimento de um cristalizador por balanço de massa com evaporação.
+- **`hidrodinamica_colunas.py`** — parâmetro de fluxo de Fair e velocidade de inundação (Souders-Brown) — dimensionamento hidráulico de colunas de pratos.
+- **`membranas.py`** — fluxo de permeado (modelo solução-difusão), seletividade ideal e coeficiente de rejeição.
+- *Extração por fluido supercrítico* — o poder de solvatação não tem fórmula fechada de uso geral (depende de correlações empíricas ajustadas por sistema soluto-solvente); ver [`docs/areas_processo/extracao_fluido_supercritico.md`](docs/areas_processo/extracao_fluido_supercritico.md).
 - **`transferencia_calor.py`** — calor sensível, coeficiente global de troca térmica U (resistências em série, com incrustação opcional) e dimensionamento de trocadores pelo método da diferença de temperatura média logarítmica (DTML/LMTD), para arranjo co-corrente ou contracorrente.
 - **`destilacao.py`** — separação binária a volatilidade relativa constante: curva de equilíbrio, número mínimo de estágios (Fenske), refluxo mínimo (Underwood), estimativa de estágios reais (correlação de Gilliland) e contagem exata de estágios ideais pelo método algébrico de McCabe-Thiele.
 

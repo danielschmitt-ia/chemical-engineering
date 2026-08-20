@@ -94,16 +94,30 @@ Ver **[docs/PROJETO_INDUSTRIAL.md](docs/PROJETO_INDUSTRIAL.md)** para o roadmap 
 
 ## 🧮 Ferramentas de Cálculo de Processo
 
-Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções independentes para os cálculos clássicos de engenharia de processos químicos — úteis tanto isoladamente (ex.: dimensionar uma tubulação) quanto como apoio à modelagem de um fluxograma completo:
+Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções independentes para os cálculos clássicos de engenharia de processos químicos — úteis tanto isoladamente (ex.: dimensionar uma tubulação) quanto como apoio à modelagem de um fluxograma completo. Organizado por área temática, cobrindo incrementalmente um roteiro de 10 áreas / ~100 tópicos de engenharia de processos (fundamentos, reações, separações, operações unitárias, automação, engenharia digital, utilidades, segurança, sustentabilidade e gestão) — cada função é código quando o tópico é cálculo fechado, ou uma nota técnica em `docs/areas_processo/` quando é metodologia/prática de engenharia sem fórmula fechada confiável.
+
+### Área 1 — Fundamentos e Fenômenos de Transporte
 
 - **`balanco_massa.py`** — fechamento de balanço de massa global (`vazao_desconhecida`, `residuo_balanco_massa_global`) e as duas operações unitárias não-reativas mais comuns: misturador (`misturador`) e divisor de corrente/splitter (`divisor`).
+- **`balanco_energia.py`** — primeira lei para sistemas abertos em regime permanente (equação de energia de escoamento, SFEE): energia cinética/potencial específicas, `balanco_energia_escoamento` e fechamento de balanço global de energia.
+- **`termodinamica.py`** — pressão de vapor (equação de Antoine e sua inversa), gás ideal, fator de compressibilidade, energia livre de Gibbs de reação, constante de equilíbrio e equação de Clausius-Clapeyron.
+- **`mecanica_fluidos.py`** — balanço de energia mecânica (Bernoulli estendido com trabalho de bomba e perdas), potência hidráulica/de eixo de bombas e velocidade terminal de sedimentação de partículas (lei de Stokes).
+- **`reologia.py`** — fluidos não-newtonianos: lei de potência (Ostwald-de Waele), plástico de Bingham e o número de Reynolds generalizado de Metzner-Reed para escoamento em tubulações.
+- **`piping.py`** — dimensionamento de tubulação por velocidade recomendada, espessura mínima de parede sob pressão interna (fórmula de Barlow, base da ASME B31.3), dilatação térmica livre e tensão admissível de expansão térmica (a base de uma análise de flexibilidade de tubulações).
 - **`perda_carga.py`** — perda de carga em tubulações pela equação de Darcy-Weisbach: número de Reynolds, fator de atrito (laminar exato, turbulento via correlação explícita de Swamee-Jain), perda distribuída e localizada (acessórios, método K).
+- *Transporte pneumático de sólidos* — correlações de projeto (velocidade mínima de transporte, queda de pressão bifásica) são fortemente empíricas e específicas do material; ver nota técnica em [`docs/areas_processo/transporte_pneumatico_solidos.md`](docs/areas_processo/transporte_pneumatico_solidos.md) em vez de uma função de código.
+
+### Área 3 (parcial) — Transferência de Calor e Separação
+
 - **`transferencia_calor.py`** — calor sensível, coeficiente global de troca térmica U (resistências em série, com incrustação opcional) e dimensionamento de trocadores pelo método da diferença de temperatura média logarítmica (DTML/LMTD), para arranjo co-corrente ou contracorrente.
 - **`destilacao.py`** — separação binária a volatilidade relativa constante: curva de equilíbrio, número mínimo de estágios (Fenske), refluxo mínimo (Underwood), estimativa de estágios reais (correlação de Gilliland) e contagem exata de estágios ideais pelo método algébrico de McCabe-Thiele.
+
+### Reações e Composição
+
 - **`conversao.py`** — conversão de reagentes, reagente limitante, grau de avanço (extensão) da reação, seletividade e rendimento — para reações com subprodutos.
 - **`fracao_molar.py`** — massa molar média de uma mistura, conversão entre fração mássica e molar, e pressão parcial (lei de Dalton).
 
-Cada função é independente e testada isoladamente (`tests/test_balanco_massa.py`, `tests/test_perda_carga.py`, `tests/test_transferencia_calor.py`, `tests/test_destilacao.py`, `tests/test_conversao.py`, `tests/test_fracao_molar.py`) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
+Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
 
 ```python
 from calculos_processo import numero_reynolds, fator_atrito_darcy, perda_carga_total

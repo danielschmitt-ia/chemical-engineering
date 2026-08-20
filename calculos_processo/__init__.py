@@ -1,8 +1,15 @@
 """Ferramentas de cálculo de engenharia de processos químicos — independentes do gêmeo digital
 do reator (`reator_digital_twin/`), mas usadas no mesmo tipo de análise de fluxograma: balanço
-de massa, perda de carga em tubulações, transferência de calor, separação por destilação,
+de massa e energia, termodinâmica química, mecânica dos fluidos, reologia não-newtoniana,
+tubulações industriais, perda de carga, transferência de calor, separação por destilação,
 conversão de reagentes e composição de misturas (fração molar/mássica)."""
 
+from .balanco_energia import (
+    balanco_energia_escoamento,
+    energia_cinetica_especifica,
+    energia_potencial_especifica,
+    residuo_balanco_energia_global,
+)
 from .balanco_massa import divisor, misturador, residuo_balanco_massa_global, vazao_desconhecida
 from .conversao import (
     grau_avanco,
@@ -29,6 +36,13 @@ from .fracao_molar import (
     massa_molar_media,
     pressao_parcial,
 )
+from .mecanica_fluidos import (
+    numero_reynolds_particula,
+    potencia_eixo_bomba,
+    potencia_hidraulica_bomba,
+    trabalho_bomba_necessario,
+    velocidade_terminal_stokes,
+)
 from .perda_carga import (
     fator_atrito_darcy,
     numero_reynolds,
@@ -36,6 +50,28 @@ from .perda_carga import (
     perda_carga_localizada,
     perda_carga_total,
     velocidade_escoamento,
+)
+from .piping import (
+    diametro_a_partir_de_velocidade,
+    dilatacao_termica_tubulacao,
+    espessura_minima_parede,
+    tensao_admissivel_expansao_termica,
+)
+from .reologia import (
+    fator_atrito_laminar_lei_potencia,
+    reynolds_generalizado_lei_potencia,
+    tensao_cisalhante_bingham,
+    tensao_cisalhante_lei_potencia,
+    viscosidade_aparente_lei_potencia,
+)
+from .termodinamica import (
+    clausius_clapeyron_pressao,
+    constante_equilibrio,
+    energia_livre_gibbs_reacao,
+    fator_compressibilidade,
+    pressao_gas_ideal,
+    pressao_vapor_antoine,
+    temperatura_ebulicao_antoine,
 )
 from .transferencia_calor import (
     area_troca_termica,
@@ -47,11 +83,41 @@ from .transferencia_calor import (
 )
 
 __all__ = [
+    # balanco_energia
+    "balanco_energia_escoamento",
+    "energia_cinetica_especifica",
+    "energia_potencial_especifica",
+    "residuo_balanco_energia_global",
     # balanco_massa
     "divisor",
     "misturador",
     "residuo_balanco_massa_global",
     "vazao_desconhecida",
+    # mecanica_fluidos
+    "numero_reynolds_particula",
+    "potencia_eixo_bomba",
+    "potencia_hidraulica_bomba",
+    "trabalho_bomba_necessario",
+    "velocidade_terminal_stokes",
+    # piping
+    "diametro_a_partir_de_velocidade",
+    "dilatacao_termica_tubulacao",
+    "espessura_minima_parede",
+    "tensao_admissivel_expansao_termica",
+    # reologia
+    "fator_atrito_laminar_lei_potencia",
+    "reynolds_generalizado_lei_potencia",
+    "tensao_cisalhante_bingham",
+    "tensao_cisalhante_lei_potencia",
+    "viscosidade_aparente_lei_potencia",
+    # termodinamica
+    "clausius_clapeyron_pressao",
+    "constante_equilibrio",
+    "energia_livre_gibbs_reacao",
+    "fator_compressibilidade",
+    "pressao_gas_ideal",
+    "pressao_vapor_antoine",
+    "temperatura_ebulicao_antoine",
     # perda_carga
     "fator_atrito_darcy",
     "numero_reynolds",

@@ -22,6 +22,8 @@ from .balanco_energia import (
     energia_potencial_especifica,
     residuo_balanco_energia_global,
 )
+from .analise_financeira_projetos import payback_simples, taxa_interna_retorno, valor_presente_liquido
+from .analise_variabilidade import coeficiente_variacao, desvio_padrao_amostral
 from .balanco_carbono import emissao_co2_combustao, intensidade_carbono
 from .balanco_massa import divisor, misturador, residuo_balanco_massa_global, vazao_desconhecida
 from .captura_carbono_ccs import eficiencia_captura, emissao_evitada
@@ -56,6 +58,12 @@ from .conversao import (
 )
 from .controle_pid import parametros_isa_para_paralelo, saida_pid_paralelo
 from .conversao import conversao as conversao_reagente
+from .controle_estatistico_processo import (
+    indice_capacidade_cp,
+    indice_capacidade_cpk,
+    limite_controle_inferior,
+    limite_controle_superior,
+)
 from .cristalizacao import (
     crescimento_cristal_lei_delta_L,
     rendimento_cristalizacao,
@@ -100,6 +108,14 @@ from .fluidizacao import (
 from .filtragem import taxa_filtracao, tempo_filtracao_pressao_constante
 from .geracao_vapor import eficiencia_caldeira, eficiencia_global_cogeracao, heat_rate_cogeracao
 from .eficiencia_energetica import consumo_especifico_energia
+from .engenharia_corrosao import taxa_corrosao
+from .engenharia_particulas import diametro_medio_aritmetico, diametro_medio_sauter
+from .engenharia_polimeros import (
+    grau_polimerizacao,
+    indice_polidispersao,
+    massa_molar_massa_media,
+    massa_molar_numero_medio,
+)
 from .fmea_rpn import numero_prioridade_risco
 from .fta_arvore_falhas import probabilidade_porta_e, probabilidade_porta_ou
 from .fracao_molar import (
@@ -115,6 +131,7 @@ from .hidrodinamica_colunas import (
 )
 from .lixiviacao import concentracao_lixiviado, rendimento_lixiviacao_estagio_ideal
 from .metricas_hidricas import intensidade_hidrica, taxa_reuso_agua
+from .manufatura_enxuta import disponibilidade_oee, oee, performance_oee, qualidade_oee
 from .mecanica_fluidos import (
     numero_reynolds_particula,
     potencia_eixo_bomba,
@@ -211,6 +228,33 @@ from .transferencia_massa import (
 )
 
 __all__ = [
+    # analise_variabilidade
+    "coeficiente_variacao",
+    "desvio_padrao_amostral",
+    # controle_estatistico_processo
+    "indice_capacidade_cp",
+    "indice_capacidade_cpk",
+    "limite_controle_inferior",
+    "limite_controle_superior",
+    # engenharia_corrosao
+    "taxa_corrosao",
+    # engenharia_particulas
+    "diametro_medio_aritmetico",
+    "diametro_medio_sauter",
+    # engenharia_polimeros
+    "grau_polimerizacao",
+    "indice_polidispersao",
+    "massa_molar_massa_media",
+    "massa_molar_numero_medio",
+    # manufatura_enxuta
+    "disponibilidade_oee",
+    "oee",
+    "performance_oee",
+    "qualidade_oee",
+    # analise_financeira_projetos
+    "payback_simples",
+    "taxa_interna_retorno",
+    "valor_presente_liquido",
     # tratamento_efluentes
     "carga_poluente",
     "eficiencia_remocao",

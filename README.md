@@ -188,6 +188,17 @@ Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções 
 - **`pirolise_gaseificacao.py`** — eficiência de gás frio (cold gas efficiency).
 - *ACV*, *biocombustíveis/biorrefinarias* (a aplicação de biodiesel já implementada em `reator_digital_twin`), *células de combustível/H2 verde*, *licenciamento ambiental* e *tratamento de gases de exaustão* (mesma base de `absorcao_stripping.py`) — metodologia e regulamentação, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
 
+### Área 10 — Gestão Industrial, Ciência dos Materiais e Setores
+
+- **`analise_variabilidade.py`** — desvio padrão amostral e coeficiente de variação.
+- **`controle_estatistico_processo.py`** — limites de controle de Shewhart (UCL/LCL) e os índices de capacidade Cp/Cpk.
+- **`engenharia_corrosao.py`** — taxa de corrosão por perda de massa (ASTM G1), em unidades dimensionalmente consistentes.
+- **`engenharia_particulas.py`** — diâmetro médio aritmético e diâmetro médio de Sauter (superfície-volume).
+- **`engenharia_polimeros.py`** — Mn, Mw, índice de polidispersão e grau de polimerização.
+- **`manufatura_enxuta.py`** — OEE (Overall Equipment Effectiveness) e seus três componentes.
+- **`analise_financeira_projetos.py`** — VPL, payback simples e TIR (verificada: VPL ≈ 0 na taxa encontrada).
+- *Otimização econômica de processos* — já implementada como Economic MPC em `reator_digital_twin`; *debottlenecking*, *degradação/falha de materiais*, *logística*, *metalurgia/pirometalurgia*, *celulose e papel*, *refino de petróleo/petroquímica*, *PCP*, *engenharia de superfícies*, *cerâmicas avançadas* e *validação farmacêutica* — prática de engenharia e setores específicos, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
+
 Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
 
 ```python

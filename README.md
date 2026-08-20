@@ -146,6 +146,13 @@ Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções 
 - **`centrifugacao.py`** — força g centrífuga e velocidade de sedimentação sob campo centrífugo (Stokes com ω²r no lugar de g) — verificada contra `mecanica_fluidos.velocidade_terminal_stokes` (a razão entre as duas é exatamente a força g).
 - *Transferência de calor* e *fluidização* já cobertas por `transferencia_calor.py` (acima) e `fluidizacao.py` (Área 2).
 
+### Área 5 — Automação, Instrumentação e Controle
+
+- **`controle_pid.py`** — saída de um controlador PID na forma paralela, e conversão dos parâmetros de sintonia ISA (Kp, Ti, Td) para essa forma.
+- **`valvulas_controle.py`** — equação do coeficiente de vazão (Cv) de uma válvula de controle, e as características linear e igual-percentagem.
+- *MPC* — já implementado e testado em `reator_digital_twin/modelo.py` (`calcular_acao_controle`, `rodar_mpc`, `rodar_mpc_economico`); ver [`docs/areas_processo/mpc_controle_preditivo.md`](docs/areas_processo/mpc_controle_preditivo.md).
+- *Automação avançada*, *gerenciamento de alarmes*, *patrimônio de dados industriais (PIMS)* e *Indústria 4.0/gêmeos digitais* — arquitetura e prática de engenharia, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
+
 Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
 
 ```python

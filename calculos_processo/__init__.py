@@ -50,6 +50,7 @@ from .conversao import (
     rendimento_global,
     seletividade,
 )
+from .controle_pid import parametros_isa_para_paralelo, saida_pid_paralelo
 from .conversao import conversao as conversao_reagente
 from .cristalizacao import (
     crescimento_cristal_lei_delta_L,
@@ -164,6 +165,12 @@ from .transferencia_calor import (
     dtml_trocador,
     taxa_calor_trocador,
 )
+from .valvulas_controle import (
+    caracteristica_igual_percentagem,
+    caracteristica_linear,
+    cv_necessario,
+    vazao_valvula_controle,
+)
 from .transferencia_massa import (
     altura_unidade_transferencia,
     fluxo_convectivo_massa,
@@ -175,6 +182,14 @@ from .transferencia_massa import (
 )
 
 __all__ = [
+    # controle_pid
+    "parametros_isa_para_paralelo",
+    "saida_pid_paralelo",
+    # valvulas_controle
+    "caracteristica_igual_percentagem",
+    "caracteristica_linear",
+    "cv_necessario",
+    "vazao_valvula_controle",
     # filtragem
     "taxa_filtracao",
     "tempo_filtracao_pressao_constante",

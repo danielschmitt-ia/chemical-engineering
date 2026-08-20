@@ -11,6 +11,23 @@ from .balanco_energia import (
     residuo_balanco_energia_global,
 )
 from .balanco_massa import divisor, misturador, residuo_balanco_massa_global, vazao_desconhecida
+from .bioreatores import (
+    biomassa_crescimento_exponencial,
+    rendimento_biomassa_substrato,
+    taxa_especifica_crescimento_monod,
+    taxa_transferencia_oxigenio,
+    tempo_duplicacao,
+)
+from .cinetica_reatores import (
+    conversao_cstr_primeira_ordem,
+    conversao_pfr_primeira_ordem,
+    constante_velocidade_arrhenius,
+    numero_damkohler,
+    taxa_reacao_ordem_n,
+    tempo_batelada,
+    tempo_espacial_cstr,
+    tempo_espacial_pfr,
+)
 from .conversao import (
     grau_avanco,
     mols_a_partir_avanco,
@@ -21,6 +38,20 @@ from .conversao import (
     seletividade,
 )
 from .conversao import conversao as conversao_reagente
+from .eletroquimica import (
+    eficiencia_corrente,
+    massa_produzida_faraday,
+    mols_produzidos_faraday,
+    potencial_nernst,
+    tempo_necessario_faraday,
+)
+from .engenharia_alimentos import (
+    letalidade_acumulada,
+    populacao_sobrevivente,
+    reducoes_logaritmicas,
+    taxa_letal,
+    valor_D_na_temperatura,
+)
 from .destilacao import (
     composicao_liquido_equilibrio,
     equilibrio_binario,
@@ -29,6 +60,11 @@ from .destilacao import (
     numero_minimo_estagios_fenske,
     refluxo_minimo,
     volatilidade_relativa,
+)
+from .fluidizacao import (
+    numero_arquimedes,
+    queda_pressao_leito_fluidizado,
+    velocidade_minima_fluidizacao,
 )
 from .fracao_molar import (
     fracao_massica_a_partir_molar,
@@ -56,6 +92,11 @@ from .piping import (
     dilatacao_termica_tubulacao,
     espessura_minima_parede,
     tensao_admissivel_expansao_termica,
+)
+from .reatores_leito_fixo import (
+    fator_efetividade_esfera,
+    modulo_thiele_esfera,
+    queda_pressao_ergun,
 )
 from .reologia import (
     fator_atrito_laminar_lei_potencia,
@@ -93,6 +134,41 @@ __all__ = [
     "misturador",
     "residuo_balanco_massa_global",
     "vazao_desconhecida",
+    # cinetica_reatores
+    "constante_velocidade_arrhenius",
+    "conversao_cstr_primeira_ordem",
+    "conversao_pfr_primeira_ordem",
+    "numero_damkohler",
+    "taxa_reacao_ordem_n",
+    "tempo_batelada",
+    "tempo_espacial_cstr",
+    "tempo_espacial_pfr",
+    # engenharia_alimentos
+    "letalidade_acumulada",
+    "populacao_sobrevivente",
+    "reducoes_logaritmicas",
+    "taxa_letal",
+    "valor_D_na_temperatura",
+    # reatores_leito_fixo
+    "fator_efetividade_esfera",
+    "modulo_thiele_esfera",
+    "queda_pressao_ergun",
+    # fluidizacao
+    "numero_arquimedes",
+    "queda_pressao_leito_fluidizado",
+    "velocidade_minima_fluidizacao",
+    # bioreatores
+    "biomassa_crescimento_exponencial",
+    "rendimento_biomassa_substrato",
+    "taxa_especifica_crescimento_monod",
+    "taxa_transferencia_oxigenio",
+    "tempo_duplicacao",
+    # eletroquimica
+    "eficiencia_corrente",
+    "massa_produzida_faraday",
+    "mols_produzidos_faraday",
+    "potencial_nernst",
+    "tempo_necessario_faraday",
     # mecanica_fluidos
     "numero_reynolds_particula",
     "potencia_eixo_bomba",

@@ -107,15 +107,23 @@ Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções 
 - **`perda_carga.py`** — perda de carga em tubulações pela equação de Darcy-Weisbach: número de Reynolds, fator de atrito (laminar exato, turbulento via correlação explícita de Swamee-Jain), perda distribuída e localizada (acessórios, método K).
 - *Transporte pneumático de sólidos* — correlações de projeto (velocidade mínima de transporte, queda de pressão bifásica) são fortemente empíricas e específicas do material; ver nota técnica em [`docs/areas_processo/transporte_pneumatico_solidos.md`](docs/areas_processo/transporte_pneumatico_solidos.md) em vez de uma função de código.
 
+### Área 2 — Engenharia de Reações e Bioprocessos
+
+- **`cinetica_reatores.py`** — cinética (lei de Arrhenius) e equações de projeto de reatores ideais (batelada, CSTR, PFR) para ordens 0, 1 e 2, incluindo as conversões inversas para ordem 1 e o número de Damköhler.
+- **`conversao.py`** — conversão de reagentes, reagente limitante, grau de avanço (extensão) da reação, seletividade e rendimento — para reações com subprodutos.
+- **`fracao_molar.py`** — massa molar média de uma mistura, conversão entre fração mássica e molar, e pressão parcial (lei de Dalton).
+- **`engenharia_alimentos.py`** — processamento térmico de alimentos: taxa letal, valor D em função da temperatura e letalidade acumulada (F0) de um perfil tempo-temperatura real — a base do método de Bigelow/Ball para validar ciclos de esterilização.
+- *Destilação reativa* — acopla reação e separação simultaneamente, fora do escopo de fórmula fechada; ver [`docs/areas_processo/destilacao_reativa.md`](docs/areas_processo/destilacao_reativa.md), que referencia `destilacao.py`, `conversao.py`, `termodinamica.py` e `cinetica_reatores.py` como blocos de construção.
+- **`reatores_leito_fixo.py`** — queda de pressão através de um leito empacotado (equação de Ergun) e fator de efetividade catalítico via módulo de Thiele para partícula esférica.
+- **`fluidizacao.py`** — velocidade mínima de fluidização (correlação de Wen & Yu) e queda de pressão de um leito já fluidizado; usado tanto por leito fluidizado circulante quanto pelas operações unitárias de secagem/mistura em leito fluidizado.
+- **`bioreatores.py`** — cinética de crescimento de Monod, crescimento exponencial em batelada, tempo de duplicação, rendimento biomassa/substrato e taxa de transferência de oxigênio (OTR).
+- **`eletroquimica.py`** — lei de Faraday da eletrólise (massa/mols produzidos, tempo necessário, eficiência de corrente) e equação de Nernst.
+- *Síntese de produtos químicos finos* — mais uma prática de engenharia (rendimento de rota multi-etapas, scale-up não-trivial, GMP) do que um cálculo isolado; ver [`docs/areas_processo/sintese_quimicos_finos.md`](docs/areas_processo/sintese_quimicos_finos.md).
+
 ### Área 3 (parcial) — Transferência de Calor e Separação
 
 - **`transferencia_calor.py`** — calor sensível, coeficiente global de troca térmica U (resistências em série, com incrustação opcional) e dimensionamento de trocadores pelo método da diferença de temperatura média logarítmica (DTML/LMTD), para arranjo co-corrente ou contracorrente.
 - **`destilacao.py`** — separação binária a volatilidade relativa constante: curva de equilíbrio, número mínimo de estágios (Fenske), refluxo mínimo (Underwood), estimativa de estágios reais (correlação de Gilliland) e contagem exata de estágios ideais pelo método algébrico de McCabe-Thiele.
-
-### Reações e Composição
-
-- **`conversao.py`** — conversão de reagentes, reagente limitante, grau de avanço (extensão) da reação, seletividade e rendimento — para reações com subprodutos.
-- **`fracao_molar.py`** — massa molar média de uma mistura, conversão entre fração mássica e molar, e pressão parcial (lei de Dalton).
 
 Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
 

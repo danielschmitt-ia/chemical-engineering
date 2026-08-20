@@ -15,7 +15,7 @@ e condições operacionais.
   (`transferencia_calor.area_troca_termica`), Cv da válvula (`valvulas_controle.cv_necessario`),
   espessura de parede (`piping.espessura_minima_parede`), etc.
 - **Materiais de construção**: escolhidos por compatibilidade química, temperatura e (quando
-  relevante) resistência à corrosão — ver Área 10, `engenharia_corrosao.md`.
+  relevante) resistência à corrosão — ver Área 10, `calculos_processo/engenharia_corrosao.py`.
 - **Código de projeto aplicável**: ASME (vasos de pressão — Seção VIII; tubulação — B31.3),
   TEMA (trocadores casco-tubo), API (equipamentos de petróleo/petroquímica) — cada um define
   margens de segurança e métodos de cálculo próprios que podem diferir das fórmulas simplificadas

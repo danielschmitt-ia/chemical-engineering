@@ -41,6 +41,7 @@ from .cinetica_reatores import (
     tempo_espacial_cstr,
     tempo_espacial_pfr,
 )
+from .doe_fatorial import efeito_principal, numero_ensaios_fatorial
 from .conversao import (
     grau_avanco,
     mols_a_partir_avanco,
@@ -139,6 +140,13 @@ from .reatores_leito_fixo import (
     modulo_thiele_esfera,
     queda_pressao_ergun,
 )
+from .scale_up import (
+    escalonamento_lei_potencia,
+    velocidade_escala_froude_constante,
+    velocidade_escala_ponta_pa_constante,
+    velocidade_escala_potencia_por_volume_constante,
+    velocidade_escala_reynolds_constante,
+)
 from .secagem import tempo_secagem_taxa_constante, tempo_secagem_taxa_decrescente, tempo_secagem_total
 from .sedimentacao import fluxo_massico_solidos, velocidade_sedimentacao_dificultada
 from .reologia import (
@@ -182,6 +190,15 @@ from .transferencia_massa import (
 )
 
 __all__ = [
+    # scale_up
+    "escalonamento_lei_potencia",
+    "velocidade_escala_froude_constante",
+    "velocidade_escala_ponta_pa_constante",
+    "velocidade_escala_potencia_por_volume_constante",
+    "velocidade_escala_reynolds_constante",
+    # doe_fatorial
+    "efeito_principal",
+    "numero_ensaios_fatorial",
     # controle_pid
     "parametros_isa_para_paralelo",
     "saida_pid_paralelo",

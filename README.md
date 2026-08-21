@@ -2,6 +2,8 @@
 
 Este repositório contém o ecossistema completo de um **Gêmeo Digital (Digital Twin)** para um reator químico de mistura contínua (CSTR) operando sob reação exotérmica não-linear. O projeto aborda a modelagem rigorosa dos balanços de massa e energia, simulação de falhas operacionais (*thermal runaway*), controle preditivo multivariável (MPC) de rastreamento **e econômico (Economic MPC)** com restrições de segurança, sensores virtuais (*soft sensors*) baseados em Aprendizado Profundo, detecção de falhas por resíduo (*fault detection*), uma camada de proteção independente (SIS) inspirada em práticas reais de segurança de processo (HAZOP/LOPA, IEC 61511) e uma camada de integração via **OPC-UA** (o protocolo padrão para conectar a um DCS/historiador real) — aplicável a plantas de polimerização, química fina, farmacêutica e petroquímica.
 
+Em torno desse reator, `planta_biodiesel/` costura um fluxograma de planta completo — do óleo alimentado ao biodiesel e à glicerina prontos para venda, passando por decantação, lavagem, recuperação de metanol, integração térmica, dimensionamento de utilidades, segurança e viabilidade econômica — usando o pacote `calculos_processo/` como caixa de ferramentas. Ver a seção **[🔗 Fluxograma Completo](#-fluxograma-completo-planta-de-biodiesel)** abaixo.
+
 📄 **[Projeto Industrial Completo](docs/PROJETO_INDUSTRIAL.md)** — arquitetura, roadmap de implantação (simulação → shadow mode → piloto → produção), requisitos técnicos e caso de negócio para levar isto a uma planta real.
 
 ---
@@ -95,6 +97,8 @@ Ver **[docs/PROJETO_INDUSTRIAL.md](docs/PROJETO_INDUSTRIAL.md)** para o roadmap 
 ## 🧮 Ferramentas de Cálculo de Processo
 
 Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções independentes para os cálculos clássicos de engenharia de processos químicos — úteis tanto isoladamente (ex.: dimensionar uma tubulação) quanto como apoio à modelagem de um fluxograma completo. Organizado por área temática, cobrindo incrementalmente um roteiro de 10 áreas / ~100 tópicos de engenharia de processos (fundamentos, reações, separações, operações unitárias, automação, engenharia digital, utilidades, segurança, sustentabilidade e gestão) — cada função é código quando o tópico é cálculo fechado, ou uma nota técnica em `docs/areas_processo/` quando é metodologia/prática de engenharia sem fórmula fechada confiável.
+
+Isolada, cada função abaixo é um cálculo de referência. Costuradas, viram o fluxograma completo da seção **[🔗 Fluxograma Completo](#-fluxograma-completo-planta-de-biodiesel)**, mais adiante — vale ler esta lista com aquele caso de uso em mente.
 
 ### Área 1 — Fundamentos e Fenômenos de Transporte
 
@@ -211,6 +215,40 @@ print(resultado["delta_p_total"])  # Pa
 
 ---
 
+## 🔗 Fluxograma Completo: Planta de Biodiesel
+
+Os módulos de `calculos_processo/` acima são blocos soltos, cada um resolvendo um cálculo isolado — a analogia é uma caixa de ferramentas. `planta_biodiesel/fluxograma.py` é o problema que essa caixa de ferramentas resolve: um fluxograma de planta único e fisicamente consistente, do óleo alimentado ao reator até o biodiesel e a glicerina prontos para venda, onde cada estágio consome a saída do estágio anterior e o balanço de massa fecha exatamente por construção (verificado em `tests/test_planta_biodiesel.py`) — não é uma coleção de exemplos com números soltos.
+
+| Estágio | O que calcula | Módulo(s) |
+|---|---|---|
+| 1. Reator | Conversão de triglicerídeo em FAME + glicerina, pela extensão de reação | `calculos_processo.conversao` |
+| 2. Decantação | Separação gravitacional FAME/glicerina; área do decantador pela velocidade de sedimentação | `balanco_massa`, `mecanica_fluidos`, `sedimentacao` |
+| 3. Lavagem | Estágios de lavagem com água necessários para remover glicerina residual (Kremser) | `extracao_liquido_liquido` |
+| 4. Recuperação de metanol | Metanol dissolvido evaporado e reciclado ao reator | `evaporacao` |
+| 5. Integração térmica | Utilidade quente/fria mínima da planta (Problem Table Algorithm) | `integracao_processos_pinch` |
+| 6-7. Utilidades | Tubulação, bombeamento e agitação do misturador de lavagem | `perda_carga`, `piping`, `mecanica_fluidos`, `mistura_agitacao` |
+| 8. Segurança | FMEA dos principais modos de falha da planta | `fmea_rpn` |
+| 9. Economia | Produção, receita, VPL, payback e TIR do investimento | `analise_financeira_projetos` |
+| 10. Sustentabilidade | CO2 fóssil evitado e intensidade hídrica da lavagem | `balanco_carbono`, `metricas_hidricas` |
+| 11. Química verde | Economia atômica da própria reação de transesterificação | `quimica_verde` |
+
+Rode a simulação completa e gere o relatório com o gráfico-resumo:
+
+```bash
+python demo_planta_biodiesel.py
+```
+
+```python
+from planta_biodiesel import ParametrosPlantaBiodiesel, simular_planta
+
+resultado = simular_planta(ParametrosPlantaBiodiesel(vazao_molar_trigliceridio=100.0))
+print(resultado.financeiro.vpl, resultado.lavagem.estagios_recomendados)
+```
+
+O resultado mais interessante não é o mais "bonito": nos preços ilustrativos usados, a planta tem margem de ~3% sobre a receita e TIR (~10%) abaixo do custo de capital (12% a.a.) — um VPL negativo. Isso não é um bug: reflete a economia real de biodiesel, historicamente apertada porque o óleo vegetal domina o custo variável (70-85% na prática), o que é exatamente por que a produção depende de subsídios/mandatos de mistura na maioria dos países que a adotam em escala. Um caso de estudo que só desse números favoráveis seria menos crível — e menos útil como exercício de engenharia.
+
+---
+
 ## 🏭 Aplicações Industriais
 
 Um CSTR não-isotérmico com risco de fuga térmica não é um exercício acadêmico isolado — é o núcleo de processos usados hoje em vários segmentos da indústria química e de processos:
@@ -272,15 +310,21 @@ Esses dois casos ilustram o mesmo padrão: o sistema de controle em operação n
    ```
    Salva `saponificacao.png`.
 
+6. (Opcional) Rode o fluxograma completo da planta de biodiesel (reator + decantação + lavagem + recuperação de metanol + integração térmica + economia — ver [🔗 Fluxograma Completo](#-fluxograma-completo-planta-de-biodiesel)):
+   ```bash
+   python demo_planta_biodiesel.py
+   ```
+   Salva `planta_biodiesel.png`.
+
 ---
 
 ## 🧪 Testes
 
-O pacote `reator_digital_twin/` tem uma suíte de testes automatizados (`pytest`), incluindo testes de integração que sobem um servidor OPC-UA de verdade — não mocks. Vários deles são regressões diretas de bugs reais encontrados construindo a integração (descasamento de relógio planta/controlador, falta de *warm-start* no otimizador, SIS disparando fora de hora — ver histórico de commits).
+Os pacotes `reator_digital_twin/`, `calculos_processo/` e `planta_biodiesel/` têm uma suíte de testes automatizados (`pytest`) — mais de 400 testes no total, incluindo testes de integração que sobem um servidor OPC-UA de verdade (não mocks) e testes de regressão do fluxograma da planta de biodiesel (o balanço de massa/energia de cada estágio fecha exatamente, verificado contra o cálculo esperado, não só "roda sem erro"). Vários são regressões diretas de bugs reais encontrados construindo este repositório (descasamento de relógio planta/controlador, falta de *warm-start* no otimizador, SIS disparando fora de hora, consumo de matéria-prima calculado a partir do residual não-reagido em vez da alimentação — ver histórico de commits).
 
 ```bash
 pip install -r requirements-dev.txt
 pytest -v
 ```
 
-A suíte cobre carregamento de config (incluindo a pegadinha de notação científica do PyYAML), o modelo físico, os dois MPCs, a detecção de falha (fouling e saponificação), o SIS e o ciclo fechado via OPC-UA. Leva ~3 minutos (a maior parte é tempo real de otimização SLSQP, não overhead de teste) — ainda não está conectada a um pipeline de CI (ver `docs/PROJETO_INDUSTRIAL.md`, seção 8).
+A suíte cobre carregamento de config (incluindo a pegadinha de notação científica do PyYAML), o modelo físico, os dois MPCs, a detecção de falha (fouling e saponificação), o SIS, o ciclo fechado via OPC-UA, as ~200 funções de `calculos_processo/` e o fluxograma completo de `planta_biodiesel/`. Leva alguns minutos (a maior parte é tempo real de otimização SLSQP dos testes do MPC, não overhead de teste) — ainda não está conectada a um pipeline de CI (ver `docs/PROJETO_INDUSTRIAL.md`, seção 8).

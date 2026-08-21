@@ -92,6 +92,125 @@ Ver **[docs/PROJETO_INDUSTRIAL.md](docs/PROJETO_INDUSTRIAL.md)** para o roadmap 
 
 ---
 
+## 🧮 Ferramentas de Cálculo de Processo
+
+Além do gêmeo digital do CSTR, o pacote `calculos_processo/` reúne funções independentes para os cálculos clássicos de engenharia de processos químicos — úteis tanto isoladamente (ex.: dimensionar uma tubulação) quanto como apoio à modelagem de um fluxograma completo. Organizado por área temática, cobrindo incrementalmente um roteiro de 10 áreas / ~100 tópicos de engenharia de processos (fundamentos, reações, separações, operações unitárias, automação, engenharia digital, utilidades, segurança, sustentabilidade e gestão) — cada função é código quando o tópico é cálculo fechado, ou uma nota técnica em `docs/areas_processo/` quando é metodologia/prática de engenharia sem fórmula fechada confiável.
+
+### Área 1 — Fundamentos e Fenômenos de Transporte
+
+- **`balanco_massa.py`** — fechamento de balanço de massa global (`vazao_desconhecida`, `residuo_balanco_massa_global`) e as duas operações unitárias não-reativas mais comuns: misturador (`misturador`) e divisor de corrente/splitter (`divisor`).
+- **`balanco_energia.py`** — primeira lei para sistemas abertos em regime permanente (equação de energia de escoamento, SFEE): energia cinética/potencial específicas, `balanco_energia_escoamento` e fechamento de balanço global de energia.
+- **`termodinamica.py`** — pressão de vapor (equação de Antoine e sua inversa), gás ideal, fator de compressibilidade, energia livre de Gibbs de reação, constante de equilíbrio e equação de Clausius-Clapeyron.
+- **`mecanica_fluidos.py`** — balanço de energia mecânica (Bernoulli estendido com trabalho de bomba e perdas), potência hidráulica/de eixo de bombas e velocidade terminal de sedimentação de partículas (lei de Stokes).
+- **`reologia.py`** — fluidos não-newtonianos: lei de potência (Ostwald-de Waele), plástico de Bingham e o número de Reynolds generalizado de Metzner-Reed para escoamento em tubulações.
+- **`piping.py`** — dimensionamento de tubulação por velocidade recomendada, espessura mínima de parede sob pressão interna (fórmula de Barlow, base da ASME B31.3), dilatação térmica livre e tensão admissível de expansão térmica (a base de uma análise de flexibilidade de tubulações).
+- **`perda_carga.py`** — perda de carga em tubulações pela equação de Darcy-Weisbach: número de Reynolds, fator de atrito (laminar exato, turbulento via correlação explícita de Swamee-Jain), perda distribuída e localizada (acessórios, método K).
+- *Transporte pneumático de sólidos* — correlações de projeto (velocidade mínima de transporte, queda de pressão bifásica) são fortemente empíricas e específicas do material; ver nota técnica em [`docs/areas_processo/transporte_pneumatico_solidos.md`](docs/areas_processo/transporte_pneumatico_solidos.md) em vez de uma função de código.
+
+### Área 2 — Engenharia de Reações e Bioprocessos
+
+- **`cinetica_reatores.py`** — cinética (lei de Arrhenius) e equações de projeto de reatores ideais (batelada, CSTR, PFR) para ordens 0, 1 e 2, incluindo as conversões inversas para ordem 1 e o número de Damköhler.
+- **`conversao.py`** — conversão de reagentes, reagente limitante, grau de avanço (extensão) da reação, seletividade e rendimento — para reações com subprodutos.
+- **`fracao_molar.py`** — massa molar média de uma mistura, conversão entre fração mássica e molar, e pressão parcial (lei de Dalton).
+- **`engenharia_alimentos.py`** — processamento térmico de alimentos: taxa letal, valor D em função da temperatura e letalidade acumulada (F0) de um perfil tempo-temperatura real — a base do método de Bigelow/Ball para validar ciclos de esterilização.
+- *Destilação reativa* — acopla reação e separação simultaneamente, fora do escopo de fórmula fechada; ver [`docs/areas_processo/destilacao_reativa.md`](docs/areas_processo/destilacao_reativa.md), que referencia `destilacao.py`, `conversao.py`, `termodinamica.py` e `cinetica_reatores.py` como blocos de construção.
+- **`reatores_leito_fixo.py`** — queda de pressão através de um leito empacotado (equação de Ergun) e fator de efetividade catalítico via módulo de Thiele para partícula esférica.
+- **`fluidizacao.py`** — velocidade mínima de fluidização (correlação de Wen & Yu) e queda de pressão de um leito já fluidizado; usado tanto por leito fluidizado circulante quanto pelas operações unitárias de secagem/mistura em leito fluidizado.
+- **`bioreatores.py`** — cinética de crescimento de Monod, crescimento exponencial em batelada, tempo de duplicação, rendimento biomassa/substrato e taxa de transferência de oxigênio (OTR).
+- **`eletroquimica.py`** — lei de Faraday da eletrólise (massa/mols produzidos, tempo necessário, eficiência de corrente) e equação de Nernst.
+- *Síntese de produtos químicos finos* — mais uma prática de engenharia (rendimento de rota multi-etapas, scale-up não-trivial, GMP) do que um cálculo isolado; ver [`docs/areas_processo/sintese_quimicos_finos.md`](docs/areas_processo/sintese_quimicos_finos.md).
+
+### Área 3 — Operações Unitárias de Separação e Fluidos
+
+- **`transferencia_massa.py`** — lei de Fick, fluxo convectivo, o método HTU/NTU para contactores contínuos, e a equação de Kremser (`fracao_nao_recuperada_kremser`/`numero_estagios_kremser`) para cascatas de estágios de equilíbrio — verificada contra uma simulação numérica direta estágio a estágio, base comum de absorção, esgotamento e extração líquido-líquido.
+- **`absorcao_stripping.py`** — fator de absorção/esgotamento e recuperação por estágios via Kremser.
+- **`extracao_liquido_liquido.py`** — coeficiente de distribuição, extração em estágio único e cascata em contracorrente (mesma equação de Kremser, com o fator de extração).
+- **`adsorcao_troca_ionica.py`** — isotermas de Langmuir e Freundlich, e uma estimativa estequiométrica (limite superior) do tempo de ruptura de um leito.
+- **`cristalizacao.py`** — supersaturação relativa, lei ΔL de McCabe (crescimento independente do tamanho) e rendimento de um cristalizador por balanço de massa com evaporação.
+- **`hidrodinamica_colunas.py`** — parâmetro de fluxo de Fair e velocidade de inundação (Souders-Brown) — dimensionamento hidráulico de colunas de pratos.
+- **`membranas.py`** — fluxo de permeado (modelo solução-difusão), seletividade ideal e coeficiente de rejeição.
+- *Extração por fluido supercrítico* — o poder de solvatação não tem fórmula fechada de uso geral (depende de correlações empíricas ajustadas por sistema soluto-solvente); ver [`docs/areas_processo/extracao_fluido_supercritico.md`](docs/areas_processo/extracao_fluido_supercritico.md).
+- **`transferencia_calor.py`** — calor sensível, coeficiente global de troca térmica U (resistências em série, com incrustação opcional) e dimensionamento de trocadores pelo método da diferença de temperatura média logarítmica (DTML/LMTD), para arranjo co-corrente ou contracorrente.
+- **`destilacao.py`** — separação binária a volatilidade relativa constante: curva de equilíbrio, número mínimo de estágios (Fenske), refluxo mínimo (Underwood), estimativa de estágios reais (correlação de Gilliland) e contagem exata de estágios ideais pelo método algébrico de McCabe-Thiele.
+
+### Área 4 — Operações Unitárias de Sólidos e Térmicas
+
+- **`filtragem.py`** — filtração em torta a pressão constante (equação de Ruth): taxa instantânea e tempo de filtração, resistência da torta em série com a do meio filtrante.
+- **`secagem.py`** — tempo de secagem no período de taxa constante e no período de taxa decrescente (aproximação linear).
+- **`mistura_agitacao.py`** — números de Reynolds e Froude de agitação, e potência do agitador a partir do número de potência.
+- **`lixiviacao.py`** — modelo de estágio ideal para lixiviação/extração sólido-líquido (concentração uniforme, rendimento pela fração de líquido retida no underflow).
+- **`evaporacao.py`** — balanço de massa de um evaporador de efeito único e economia de vapor.
+- **`moagem.py`** — as três leis clássicas de cominuição: Kick, Rittinger e Bond (a mais usada industrialmente).
+- **`peneiramento.py`** — eficiência de peneiramento por balanço de massa do material fino.
+- **`sedimentacao.py`** — correção de Richardson-Zaki para sedimentação dificultada e fluxo mássico de sólidos (dimensionamento de espessadores).
+- **`centrifugacao.py`** — força g centrífuga e velocidade de sedimentação sob campo centrífugo (Stokes com ω²r no lugar de g) — verificada contra `mecanica_fluidos.velocidade_terminal_stokes` (a razão entre as duas é exatamente a força g).
+- *Transferência de calor* e *fluidização* já cobertas por `transferencia_calor.py` (acima) e `fluidizacao.py` (Área 2).
+
+### Área 5 — Automação, Instrumentação e Controle
+
+- **`controle_pid.py`** — saída de um controlador PID na forma paralela, e conversão dos parâmetros de sintonia ISA (Kp, Ti, Td) para essa forma.
+- **`valvulas_controle.py`** — equação do coeficiente de vazão (Cv) de uma válvula de controle, e as características linear e igual-percentagem.
+- *MPC* — já implementado e testado em `reator_digital_twin/modelo.py` (`calcular_acao_controle`, `rodar_mpc`, `rodar_mpc_economico`); ver [`docs/areas_processo/mpc_controle_preditivo.md`](docs/areas_processo/mpc_controle_preditivo.md).
+- *Automação avançada*, *gerenciamento de alarmes*, *patrimônio de dados industriais (PIMS)* e *Indústria 4.0/gêmeos digitais* — arquitetura e prática de engenharia, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
+
+### Área 6 — Engenharia Digital, Projetos e Scale-up
+
+- **`scale_up.py`** — critérios clássicos de escalonamento de agitação (velocidade de ponta de pá, potência por volume, Reynolds, Froude constantes) e uma regra de escalonamento genérica por lei de potência, cobrindo scale-up e scale-down com a mesma fórmula.
+- **`doe_fatorial.py`** — dimensionamento de um planejamento fatorial completo (2^k) e cálculo do efeito principal de um fator.
+- *Modelagem e simulação de processos* — o repositório inteiro é o estudo de caso (RK45 adaptativo vs. RK4 de passo fixo no `reator_digital_twin`); ver [`docs/areas_processo/modelagem_simulacao_processos.md`](docs/areas_processo/modelagem_simulacao_processos.md).
+- *Especificação de equipamentos*, *CFD*, *P&ID*, *PFD* e *layout de planta* — convenções de representação e prática de projeto, não cálculo isolado; ver as notas correspondentes em [`docs/areas_processo/`](docs/areas_processo/).
+
+### Área 7 — Utilidades e Infraestrutura Industrial
+
+- **`geracao_vapor.py`** — eficiência de caldeira pelo método direto, heat rate e eficiência global de cogeração.
+- **`refrigeracao.py`** — COP real e o limite teórico de Carnot (refrigeração e bomba de calor).
+- **`tratamento_agua_caldeira.py`** — ciclos de concentração e vazão de purga (blowdown).
+- **`psicrometria.py`** — razão de umidade, umidade relativa, e range/approach de torre de resfriamento.
+- *Utilidades e sistemas auxiliares* — a integração desses sistemas mais os que ficam fora de fórmula fechada (ar comprimido, distribuição elétrica); ver [`docs/areas_processo/utilidades_sistemas_auxiliares.md`](docs/areas_processo/utilidades_sistemas_auxiliares.md).
+
+### Área 8 — Segurança de Processo e Confiabilidade
+
+- **`confiabilidade_ram.py`** — MTBF, MTTR, disponibilidade e confiabilidade exponencial R(t).
+- **`seguranca_instrumentada_sil.py`** — PFDavg de uma arquitetura 1oo1 e classificação em nível SIL (IEC 61508); o SIS em si já implementado e testado em `reator_digital_twin/modelo.py` — ver [`docs/areas_processo/sis_intertravamento_seguranca.md`](docs/areas_processo/sis_intertravamento_seguranca.md).
+- **`fmea_rpn.py`** — Número de Prioridade de Risco (RPN = severidade × ocorrência × detecção).
+- **`fta_arvore_falhas.py`** — combinação de probabilidades por portas E/OU em uma árvore de falhas (verificada a dualidade E/OU para um sistema redundante).
+- *Segurança de processo industrial* (HAZOP/LOPA), *comissionamento*, *descomissionamento*, *gestão de mudanças (MOC)*, *manutenção preditiva/proativa*, *MCC/RCM*, *manuseio de produtos perigosos* e *gestão de ativos* — metodologia e prática de engenharia de segurança, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
+
+### Área 9 — Sustentabilidade, Meio Ambiente e Transição Energética
+
+- **`integracao_processos_pinch.py`** — o Problem Table Algorithm (Linnhoff) completo: metas de utilidade quente/fria mínimas e temperatura de pinch, verificado contra um caso resolvido manualmente e contra o fechamento do balanço de energia global.
+- **`tratamento_efluentes.py`** — eficiência de remoção e carga poluente.
+- **`balanco_carbono.py`** — emissão de CO2 por balanço de massa do carbono, e intensidade de carbono.
+- **`captura_carbono_ccs.py`** — eficiência de captura e emissão evitada líquida (descontando a penalidade energética da própria captura).
+- **`eficiencia_energetica.py`** — consumo específico de energia (SEC).
+- **`metricas_hidricas.py`** — intensidade hídrica e taxa de reúso de água.
+- **`quimica_verde.py`** — economia atômica (Trost).
+- **`pirolise_gaseificacao.py`** — eficiência de gás frio (cold gas efficiency).
+- *ACV*, *biocombustíveis/biorrefinarias* (a aplicação de biodiesel já implementada em `reator_digital_twin`), *células de combustível/H2 verde*, *licenciamento ambiental* e *tratamento de gases de exaustão* (mesma base de `absorcao_stripping.py`) — metodologia e regulamentação, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
+
+### Área 10 — Gestão Industrial, Ciência dos Materiais e Setores
+
+- **`analise_variabilidade.py`** — desvio padrão amostral e coeficiente de variação.
+- **`controle_estatistico_processo.py`** — limites de controle de Shewhart (UCL/LCL) e os índices de capacidade Cp/Cpk.
+- **`engenharia_corrosao.py`** — taxa de corrosão por perda de massa (ASTM G1), em unidades dimensionalmente consistentes.
+- **`engenharia_particulas.py`** — diâmetro médio aritmético e diâmetro médio de Sauter (superfície-volume).
+- **`engenharia_polimeros.py`** — Mn, Mw, índice de polidispersão e grau de polimerização.
+- **`manufatura_enxuta.py`** — OEE (Overall Equipment Effectiveness) e seus três componentes.
+- **`analise_financeira_projetos.py`** — VPL, payback simples e TIR (verificada: VPL ≈ 0 na taxa encontrada).
+- *Otimização econômica de processos* — já implementada como Economic MPC em `reator_digital_twin`; *debottlenecking*, *degradação/falha de materiais*, *logística*, *metalurgia/pirometalurgia*, *celulose e papel*, *refino de petróleo/petroquímica*, *PCP*, *engenharia de superfícies*, *cerâmicas avançadas* e *validação farmacêutica* — prática de engenharia e setores específicos, não cálculo isolado; ver as notas em [`docs/areas_processo/`](docs/areas_processo/).
+
+Cada função é independente e testada isoladamente (um arquivo `tests/test_<módulo>.py` por módulo) — sem dependência do `reator_digital_twin/`. Exemplo de uso:
+
+```python
+from calculos_processo import numero_reynolds, fator_atrito_darcy, perda_carga_total
+
+resultado = perda_carga_total(vazao_volumetrica=0.02, D=0.1, L=100.0, rho=1000.0, mu=1e-3,
+                               rugosidade_absoluta=4.5e-5, K_total=6.0)
+print(resultado["delta_p_total"])  # Pa
+```
+
+---
+
 ## 🏭 Aplicações Industriais
 
 Um CSTR não-isotérmico com risco de fuga térmica não é um exercício acadêmico isolado — é o núcleo de processos usados hoje em vários segmentos da indústria química e de processos:

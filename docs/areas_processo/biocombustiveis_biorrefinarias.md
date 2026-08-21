@@ -8,6 +8,11 @@ alcalina (triglicerídeo + metanol → éster + glicerol), seu modo de falha rea
 importam mais que a análise de fuga térmica nesse processo (reação termicamente branda) — ver a
 seção "Aplicações Industriais" do `README.md` principal.
 
+O reator é só a primeira etapa: `planta_biodiesel/fluxograma.py` estende essa mesma matéria-prima
+e conversão até o produto acabado — decantação gravitacional, lavagem, recuperação de metanol,
+integração térmica, dimensionamento de utilidades, segurança (FMEA) e viabilidade econômica —
+ver a seção "Fluxograma Completo" do `README.md` principal e `demo_planta_biodiesel.py`.
+
 ## O conceito de biorrefinaria
 
 Uma biorrefinaria processa biomassa em múltiplos produtos simultaneamente (combustíveis,
